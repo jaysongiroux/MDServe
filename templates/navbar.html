@@ -1,0 +1,291 @@
+<nav class="glass-nav fixed w-full z-20 top-0 left-0">
+  <div class="p-4 flex max-w-screen-xl justify-between w-full mx-auto">
+    <!-- brand -->
+    <a href="/" class="flex items-center gap-3">
+      <span class="text-neutral-800 text-lg font-semibold"
+        >{{ .Site.Name }}</span
+      >
+    </a>
+
+    <!-- hamburger (mobile) -->
+    <button
+      id="hamburgerBtn"
+      aria-controls="mobilePanel"
+      aria-expanded="false"
+      class="md:hidden p-2 w-10 h-10 inline-flex items-center justify-center rounded-md text-neutral-700 hover:bg-neutral-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-neutral-300"
+    >
+      <span class="sr-only">Open main menu</span>
+      <!-- hamburger icon -->
+      <svg
+        class="w-6 h-6"
+        aria-hidden="true"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M4 6h16M4 12h16M4 18h16"
+        />
+      </svg>
+    </button>
+
+    <!-- desktop menu -->
+    <div class="hidden md:block md:w-auto">
+      <ul class="flex items-center gap-6 text-sm text-neutral-700">
+        {{ range .Navbar }} {{if .Dropdown}}
+        <li class="relative group">
+          <!-- the wrapper is a flex row so caret can be aligned if needed -->
+          <div
+            class="inline-flex items-center gap-2 px-3 py-2 rounded hover:bg-neutral-100 cursor-pointer"
+          >
+            <div>{{.Label}}</div>
+            <!-- caret (decorative for desktop) -->
+            <svg
+              class="w-4 h-4 text-neutral-500 transition-transform group-hover:rotate-180"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </div>
+
+          <!-- dropdown menu (desktop). last:md:right-0 flips the menu for the last item to avoid overflow -->
+          <div
+            class="hidden group-hover:block absolute top-full min-w-[16rem] z-30 last:md:right-0 last:md:left-auto"
+          >
+            <div
+              class="glass-dropdown text-neutral-900 border border-neutral-200 rounded-md shadow-lg mt-2"
+            >
+              <ul>
+                <li>
+                  <a
+                    href="{{.URL}}"
+                    class="block px-4 py-2 hover:bg-white/50 rounded"
+                    >{{.Label}}</a
+                  >
+                </li>
+                {{ range .Dropdown }}
+                <li>
+                  <a
+                    href="{{.URL}}"
+                    class="block px-4 py-2 hover:bg-white/50 rounded"
+                    >{{.Label}}</a
+                  >
+                </li>
+                {{end }}
+              </ul>
+            </div>
+          </div>
+        </li>
+
+        {{ else }}
+        <li>
+          <a
+            href="{{.URL}}"
+            class="px-3 py-2 rounded text-neutral-700 hover:bg-neutral-100"
+            >{{.Label}}</a
+          >
+        </li>
+        {{end}} {{end }}
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- MOBILE SLIDE-IN PANEL -->
+<div
+  id="mobilePanel"
+  class="md:hidden fixed top-0 right-0 h-full w-72 bg-white shadow-lg z-40 slide-right"
+  aria-hidden="true"
+  style="max-width: 80vw"
+>
+  <div
+    class="p-4 border-b border-neutral-200 flex items-center justify-between"
+  >
+    <div class="flex items-center gap-3">
+      <span class="font-semibold">{{ .Site.Name }}</span>
+    </div>
+    <button
+      id="mobileClose"
+      class="p-2 rounded-md hover:bg-neutral-100 focus:outline-none"
+    >
+      <span class="sr-only">Close menu</span>
+      <svg
+        class="w-5 h-5"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M6 18L18 6M6 6l12 12"
+        />
+      </svg>
+    </button>
+  </div>
+
+  <nav class="p-4">
+    <ul class="space-y-1 text-neutral-800">
+      {{ range .Navbar }} {{if .Dropdown}}
+
+      <li class="border-t border-neutral-100 pt-3">
+        <div class="flex items-center justify-between">
+          <a
+            href="{{.URL}}"
+            class="text-neutral-800 px-3 py-2 flex-1 hover:bg-neutral-100 rounded"
+            >{{.Label}}</a
+          >
+          <!-- caret button toggles submenu; keyboard accessible -->
+          <button
+            class="caret-btn p-2 rounded-md hover:bg-neutral-100"
+            aria-expanded="false"
+            aria-controls="mobile-sub-1"
+          >
+            <svg
+              class="w-4 h-4"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <!-- mobile submenu (initially hidden) -->
+        <ul id="mobile-sub-1" class="mt-2 hidden pl-4 space-y-1 text-sm">
+          {{ range .Dropdown }}
+          <li>
+            <a
+              href="{{.URL}}"
+              class="block px-3 py-2 rounded hover:bg-neutral-50"
+              >{{.Label}}</a
+            >
+          </li>
+          {{end }}
+        </ul>
+      </li>
+      {{else }}
+
+      <li>
+        <a href="{{.URL}}" class="block px-3 py-2 hover:bg-neutral-100 rounded"
+          >{{.Label}}</a
+        >
+      </li>
+      {{end}} {{end}}
+    </ul>
+  </nav>
+</div>
+
+<!-- overlay when mobile panel is open -->
+<div
+  id="mobileOverlay"
+  class="fixed inset-0 bg-neutral-900/20 hidden z-30"
+></div>
+
+<script>
+  (function () {
+    const hamburger = document.getElementById("hamburgerBtn");
+    const mobilePanel = document.getElementById("mobilePanel");
+    const mobileOverlay = document.getElementById("mobileOverlay");
+    const mobileClose = document.getElementById("mobileClose");
+
+    function openMobile() {
+      mobilePanel.classList.add("show");
+      mobilePanel.setAttribute("aria-hidden", "false");
+      hamburger.setAttribute("aria-expanded", "true");
+      mobileOverlay.classList.remove("hidden");
+      document.body.style.overflow = "hidden";
+    }
+
+    function closeMobile() {
+      mobilePanel.classList.remove("show");
+      mobilePanel.setAttribute("aria-hidden", "true");
+      hamburger.setAttribute("aria-expanded", "false");
+      mobileOverlay.classList.add("hidden");
+      document.body.style.overflow = "";
+      // also close any open mobile submenus
+      document
+        .querySelectorAll('#mobilePanel .caret-btn[aria-expanded="true"]')
+        .forEach((btn) => {
+          btn.setAttribute("aria-expanded", "false");
+          const id = btn.getAttribute("aria-controls");
+          const el = document.getElementById(id);
+          if (el) el.classList.add("hidden");
+        });
+    }
+
+    hamburger?.addEventListener("click", (e) => {
+      const expanded = hamburger.getAttribute("aria-expanded") === "true";
+      if (expanded) closeMobile();
+      else openMobile();
+    });
+
+    mobileClose?.addEventListener("click", closeMobile);
+    mobileOverlay?.addEventListener("click", closeMobile);
+
+    // close on Escape
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeMobile();
+    });
+
+    // caret toggle(s) inside mobile panel
+    document.querySelectorAll("#mobilePanel .caret-btn").forEach((btn) => {
+      const targetId = btn.getAttribute("aria-controls");
+      const panel = document.getElementById(targetId);
+      // ensure unique id exists (we used mobile-sub-1 above)
+      btn.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        const expanded = btn.getAttribute("aria-expanded") === "true";
+        btn.setAttribute("aria-expanded", String(!expanded));
+        if (panel) panel.classList.toggle("hidden", expanded);
+      });
+    });
+
+    // Optional: when resizing to desktop, ensure mobile panel is closed
+    window.addEventListener("resize", () => {
+      if (window.innerWidth >= 768) {
+        // md breakpoint and up (Tailwind default)
+        closeMobile();
+      }
+    });
+
+    // prevent dropdown overflow on desktop for items near the right edge
+    // This checks visible dropdown on hover and flips it if it would overflow.
+    // Not strictly necessary, but makes placement robust.
+    if (window.matchMedia("(min-width: 768px)").matches) {
+      document.querySelectorAll("nav ul > li.relative").forEach((li) => {
+        li.addEventListener("mouseenter", () => {
+          const dd = li.querySelector("div.absolute");
+          if (!dd) return;
+          dd.style.left = "";
+          dd.style.right = "";
+          const rect = dd.getBoundingClientRect();
+          const overflowRight = rect.right > window.innerWidth;
+          if (overflowRight) {
+            dd.style.left = "auto";
+            dd.style.right = "0";
+          } else {
+            dd.style.left = "";
+            dd.style.right = "";
+          }
+        });
+      });
+    }
+  })();
+</script>

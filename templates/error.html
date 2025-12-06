@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>{{ .ErrorCode }} - Error - {{ .Site.Name }}</title>
+
+    {{ template "scripts.html" . }}
+  </head>
+  <body class="error-page">
+    {{ template "navbar.html" . }}
+
+    <div class="error-content">
+      <div class="container">
+        <h1 class="error-code">{{ .ErrorCode }}</h1>
+        <h2 class="error-message">{{ .ErrorTitle }}</h2>
+        <p class="error-description">{{ .ErrorMessage }}</p>
+        <div>
+          <a href="/" class="error-link">← Back to Home</a>
+          <a href="javascript:history.back()" class="error-link">Go Back</a>
+        </div>
+      </div>
+    </div>
+
+    {{ template "footer.html" . }}
+  </body>
+</html>

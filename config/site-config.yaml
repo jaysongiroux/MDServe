@@ -1,0 +1,71 @@
+
+# Site Configuration
+# Purpose: Define site navigation such as the navbar and footer.
+
+# Define navbar construction
+navbar:
+  - label: Home
+    url: /
+  - label: About
+    url: /about
+  - label: Blog
+    url: /blog
+    dropdown:
+      - label: Go Programming Language Guide
+        url: /blog/posts/Go_Programming_Language_Guide
+
+# Define footer content
+footer:
+  copyright: Copyright 2025 MDServe
+  links:
+    - label: GitHub
+      url: https://github.com/jaysongiroux/mdserve
+    - label: About
+      url: /about
+
+# Define site configuration
+site:
+  # Site name
+  name: MDServe
+  # powered by text and link in the footer for the site
+  powered_by: Powered by MDServe
+  powered_by_url: https://github.com/jaysongiroux/mdserve
+  # In cases where there is pagination, this is the number of items per page
+  #  and sort direction based on the page creation date (looks at page markdown firstt
+  #  then if there is no metadata, looks at the actual file's modified date)
+  page_size: 10
+  sort_direction: desc
+
+  # Meta
+  keywords:
+    - MDServe
+    - Go
+    - Markdown
+    - Blog
+    - Website
+    - Static Site Generator
+    - Static Site
+    - Static Site Generator
+  author: MDServe
+  allow_search_engine_indexing: true
+
+  # Define the site's theme
+  theme:
+    code:
+      # https://github.com/alecthomas/chroma/tree/master/styles
+      theme: github
+      line_numbers: false
+  
+  # list of pages to use a custom layout
+  # Layouts are defined in the templates/layout_templates directory
+  layouts:
+    # Matches any page that starts with blog/ such as blog/article/example
+    - page: blog\/.*
+      layout: blog_article_layout
+    # Matches the root page for the blog
+    - page: ^blog$
+      # filter is a regex that is used to filter the site map
+      # only required for templates that need to filter the site map to 
+      # display a subset of the site map
+      filter: blog/posts/.*
+      layout: blog_layout

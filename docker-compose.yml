@@ -1,0 +1,15 @@
+version: "3.8"
+
+services:
+  mdserve:
+    # image: ghcr.io/jaysongiroux/mdserve:latest
+    build: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./content:/app/content
+      - ./config:/app/config
+      - ./templates:/app/templates
+      - ./user-static:/app/user-static
+      # The .static directory is auto-generated - no need to mount
+    restart: unless-stopped

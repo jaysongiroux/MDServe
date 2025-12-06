@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    {{ template "scripts.html" . }}
+  </head>
+
+  <body>
+    {{ template "navbar.html" . }}
+
+    <main class="container mx-auto page-content pt-20 px-2 max-w-screen-xl">{{ .Content }}</main>
+
+    {{ template "footer.html" . }}
+  </body>
+</html>

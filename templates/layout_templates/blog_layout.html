@@ -1,0 +1,166 @@
+<div class="container mx-auto page-content px-2 max-w-screen-xl">
+  <div>{{ .Content }}</div>
+
+  <div id="tag-filters" class="flex flex-row items-center gap-2 mb-4">
+    <div id="current-tag-container" class="flex flex-row items-center gap-2 border border-neutral-200 rounded">
+      <h2 id="current-tag-value" class="text-neutral-700 font-semibold !mt-0 !mb-0 text-sm px-2 py-2"></h2>
+      <button
+        id="clear-tag-btn"
+        class="px-4 rounded flex py-2 aspect-square flex align-center justify-center text-neutral-700 bg-neutral-100 border border-neutral-200 hover:bg-neutral-200 active:scale-95 transition-all font-semibold text-sm min-w-[36px] min-h-[36px]"
+      >
+        ×
+      </button>
+    </div>
+  </div>
+
+  <div id="blog-articles" class="flex flex-col gap-4 mt-8"></div>
+
+  <div id="pagination-controls" class="flex justify-between mt-8">
+    <button
+      id="prev-btn"
+      class="px-4 py-2 bg-neutral-200 text-neutral-700 rounded hover:bg-neutral-300 disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      Previous
+    </button>
+    <span id="page-info" class="flex items-center text-neutral-700"></span>
+    <button
+      id="next-btn"
+      class="px-4 py-2 bg-neutral-200 text-neutral-700 rounded hover:bg-neutral-300 disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      Next
+    </button>
+  </div>
+</div>
+
+<script>
+
+  const updateUrlParam = (paramName, paramValue) => {
+  	// maintains current params but updates the given param
+  	const currentUrl = window.location.href;
+  	const newUrl = new URL(currentUrl);
+  	newUrl.searchParams.set(paramName, paramValue);
+  	window.location.href = newUrl.toString();
+  }
+
+  const clearUrlParam = (paramName) => {
+  	// maintains current params but removes the given param
+  	const currentUrl = window.location.href;
+  	const newUrl = new URL(currentUrl);
+  	newUrl.searchParams.delete(paramName);
+  	window.location.href = newUrl.toString();
+  }
+
+   const pageList = {{ .PageList}};
+   const pageSize = {{ .Site.PageSize }};
+
+   const urlParams = new URLSearchParams(window.location.search);
+   const currentPage = parseInt(urlParams.get('page')) || 1;
+   const currentTag = urlParams.get('tag') || null;
+
+   const start = (currentPage - 1) * pageSize;
+   const end = start + pageSize;
+   let paginatedSiteMap = pageList.slice(start, end);
+   let totalFilteredPages = paginatedSiteMap.length
+   if (currentTag) {
+  const lowerCurrentTag = currentTag.toLowerCase();
+  paginatedSiteMap = paginatedSiteMap.filter(article =>
+    article?.metadata?.tags?.some(tag => tag.toLowerCase().includes(lowerCurrentTag))
+  );
+  totalFilteredPages = pageList.filter(article =>
+    article?.metadata?.tags?.some(tag => tag.toLowerCase().includes(lowerCurrentTag))
+  ).length;
+   } else {
+  totalFilteredPages = pageList.length;
+   }
+
+   const totalPages = Math.ceil(totalFilteredPages / pageSize);
+
+   const articlesContainer = document.getElementById('blog-articles');
+   const prevBtn = document.getElementById('prev-btn');
+   const nextBtn = document.getElementById('next-btn');
+   const pageInfo = document.getElementById('page-info');
+
+   paginatedSiteMap.forEach(article => {
+  const structuredMetadata = {
+  	author: article?.metadata?.author,
+  	description: article?.metadata?.description,
+  	tags: article?.metadata?.tags,
+  }
+  const creationDate = article?.creation_date
+  const lastModificationDate = article?.last_modified_date
+  const description = article?.metadata?.description || article?.first_paragraph
+
+  const articleEl = document.createElement('div');
+  articleEl.className = 'p-4 border border-neutral-200 rounded hover:shadow-md transition-shadow';
+
+
+  // Create a container for the tags
+  const tagContainer = document.createElement('div');
+  tagContainer.className = 'flex flex-row gap-2';
+
+  // Generate a link for each tag
+  if (structuredMetadata.tags && structuredMetadata.tags.length > 0) {
+  	const tags = structuredMetadata.tags.map(tag => {
+  		const tagLink = document.createElement('a');
+  		tagLink.href = `?tag=${encodeURIComponent(tag)}`;
+  		tagLink.textContent = `#${tag}`;
+  		tagLink.className = 'text-sm text-blue-600 hover:underline';
+  		return tagLink;
+  	});
+
+  	// Append each tag link to the container
+  	tags.forEach(tagLink => {
+  		tagContainer.appendChild(tagLink);
+  	});
+  }
+
+  articleEl.innerHTML = `
+  <div class="flex flex-row gap-4">
+  	<p class="text-sm text-neutral-500 !mb-1">${new Date(creationDate).toLocaleDateString()}</p>
+
+  	${tagContainer.innerHTML}
+  </div>
+  <h4 class="text-xl font-semibold mb-2 !mt-0">
+  	<a href="${article.path}" class="!text-neutral-900 hover:text-blue-600">${article.first_header}</a>
+  	</h4>
+  	${description ? `<p class="text-neutral-600 mb-2">${description}</p>` : ''}
+
+  	${structuredMetadata?.author ? `<p class="text-sm text-neutral-500 !mb-1">Written by ${structuredMetadata.author}</p>`: ''}
+
+  	<p class="text-sm text-neutral-500 !mb-1">Last modified on ${new Date(lastModificationDate).toLocaleDateString()}</p>
+  `;
+  articlesContainer.appendChild(articleEl);
+   });
+
+   pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+
+
+   prevBtn.disabled = currentPage === 1;
+   nextBtn.disabled = currentPage === totalPages;
+
+   if (currentTag){
+  document.getElementById('tag-filters').classList.remove('hidden');
+  document.getElementById('current-tag-value').textContent = "#"+currentTag;
+   } else {
+  document.getElementById('tag-filters').classList.add('hidden');
+   }
+
+   prevBtn.addEventListener('click', () => {
+  if (currentPage > 1) {
+    const previousPage = currentPage - 1;
+    updateUrlParam('page', previousPage);
+  }
+   });
+
+   nextBtn.addEventListener('click', () => {
+  if (currentPage < totalPages) {
+    const nextPage = currentPage + 1;
+    updateUrlParam('page', nextPage);
+  }
+   });
+
+   document.getElementById('clear-tag-btn').addEventListener('click', () => {
+  // remove the tag from the url params
+  clearUrlParam('tag');
+   });
+</script>

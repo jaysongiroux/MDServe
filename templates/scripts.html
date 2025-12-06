@@ -1,0 +1,17 @@
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="{{ .Site.Name }}" />
+
+<link rel="stylesheet" href="{{ .AssetsPath }}/base.css" />
+<script src="{{ .AssetsPath }}/base.js"></script>
+
+<!-- User overrides -->
+<link rel="stylesheet" href="{{ .UserStaticPath }}/custom.css" />
+
+<!-- user js overrides -->
+<script src="{{ .UserStaticPath }}/custom.js"></script>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tailwindplus/elements@1" type="module"></script>
+
+{{ template "base_meta.html" . }}

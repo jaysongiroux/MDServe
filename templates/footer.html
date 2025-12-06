@@ -1,0 +1,23 @@
+<footer class="glass-footer">
+  <div class="nav-container px-4 py-6">
+    <div class="flex flex-col items-center gap-3 text-sm text-neutral-600">
+      <p class="text-center">{{ .Footer.Copyright }}</p>
+
+      <div class="flex flex-wrap items-center justify-center gap-4">
+        <a
+          href="{{ .PoweredByURL }}"
+          class="hover:text-neutral-900 transition-colors"
+        >
+          {{ .PoweredBy }}
+        </a>
+
+        {{ range .Footer.Links }}
+        <span class="text-neutral-400">•</span>
+        <a href="{{ .URL }}" class="hover:text-neutral-900 transition-colors">
+          {{ .Label }}
+        </a>
+        {{ end }}
+      </div>
+    </div>
+  </div>
+</footer>
