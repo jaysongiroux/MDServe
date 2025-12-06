@@ -1,9 +1,7 @@
 package main
 
 import (
-	"fmt"
 	"html/template"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -23,9 +21,10 @@ import (
 )
 
 func main() {
+	appLogger := logger.New("Initial Setup", logger.DebugLevel)
 	// Load .env file if it exists
 	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found or unable to load it, using system environment variables")
+		appLogger.Error("No .env file found or unable to load it, using system environment variables")
 	}
 
 	app := &handler.App{
@@ -37,27 +36,27 @@ func main() {
 	}
 
 	serverConfig, err := config.LoadServerConfig()
-	fmt.Println("Server config: ", serverConfig)
 	if err != nil {
-		log.Fatalf("Failed to load server config: %v", err)
+		appLogger.Error("Failed to load server config: %v", err)
 		panic(err)
 	}
 	app.ServerConfig = serverConfig
 
 	siteConfig, err := config.LoadSiteConfig()
 	if err != nil {
-		log.Fatalf("Failed to load site config: %v", err)
+		appLogger.Error("Failed to load site config: %v", err)
 		panic(err)
 	}
 	app.SiteConfig = siteConfig
 
 	err = logger.Init(app.ServerConfig.LogLevel)
 	if err != nil {
-		log.Fatalf("Failed to initialize logger: %v", err)
+		appLogger.Error("Failed to initialize logger: %v", err)
+		panic(err)
 	}
 	defer logger.Sync()
 
-	appLogger := logger.New("Main", app.ServerConfig.LogLevel)
+	appLogger = logger.New("Main", app.ServerConfig.LogLevel)
 	app.Logger = appLogger
 
 	if app.ServerConfig.Demo {

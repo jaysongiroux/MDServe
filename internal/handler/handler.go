@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -53,8 +52,6 @@ func HandlePage(app *App, w http.ResponseWriter, r *http.Request) {
 	} else {
 		data.Metadata = nil
 	}
-
-	fmt.Println("metadata", data.Metadata)
 
 	// Determine layout
 	layoutFile, layoutFilter := determineLayout(app, pageName)
