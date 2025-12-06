@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -18,9 +19,15 @@ import (
 	"github.com/jaysongiroux/mdserve/internal/handler"
 	htmlcompiler "github.com/jaysongiroux/mdserve/internal/html_compiler"
 	"github.com/jaysongiroux/mdserve/internal/logger"
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	// Load .env file if it exists
+	if err := godotenv.Load(); err != nil {
+		log.Println("No .env file found or unable to load it, using system environment variables")
+	}
+
 	app := &handler.App{
 		ServerConfig: nil,
 		SiteConfig:   nil,
@@ -30,14 +37,17 @@ func main() {
 	}
 
 	serverConfig, err := config.LoadServerConfig()
+	fmt.Println("Server config: ", serverConfig)
 	if err != nil {
 		log.Fatalf("Failed to load server config: %v", err)
+		panic(err)
 	}
 	app.ServerConfig = serverConfig
 
 	siteConfig, err := config.LoadSiteConfig()
 	if err != nil {
 		log.Fatalf("Failed to load site config: %v", err)
+		panic(err)
 	}
 	app.SiteConfig = siteConfig
 
@@ -50,10 +60,12 @@ func main() {
 	appLogger := logger.New("Main", app.ServerConfig.LogLevel)
 	app.Logger = appLogger
 
-	err = demo.HandleDemoEnabled(app)
-	if err != nil {
-		appLogger.Error("Failed to handle demo mode: %v", err)
-		return
+	if app.ServerConfig.Demo {
+		err = demo.HandleDemoEnabled(app)
+		if err != nil {
+			appLogger.Error("Failed to handle demo mode: %v", err)
+			return
+		}
 	}
 
 	generatedPath := app.ServerConfig.GeneratedPath

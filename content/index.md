@@ -1,3 +1,8 @@
+<!-- 
+	NOTE: 
+	This file was written because the demo mode is enabled.
+	You can disable this behavior by setting the demo flag to false in the server config file.
+	 -->
 # MDServe
 
 **MDServe** is a high-performance, flat-file content server built with Go.

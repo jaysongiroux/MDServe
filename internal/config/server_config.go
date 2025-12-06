@@ -1,8 +1,6 @@
 package config
 
 import (
-	"os"
-
 	"github.com/jaysongiroux/mdserve/internal/constants"
 	"github.com/jaysongiroux/mdserve/internal/logger"
 	"go.yaml.in/yaml/v3"
@@ -24,13 +22,13 @@ type ServerConfig struct {
 }
 
 func LoadServerConfig() (*ServerConfig, error) {
-	yamlFile, err := os.ReadFile(constants.ServerConfigPath)
+	configContent, err := GetConfigContent(ConfigTypeServer)
 	if err != nil {
 		return nil, err
 	}
 
 	var config ServerConfig
-	err = yaml.Unmarshal(yamlFile, &config)
+	err = yaml.Unmarshal([]byte(configContent), &config)
 	if err != nil {
 		return nil, err
 	}

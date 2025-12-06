@@ -17,9 +17,6 @@ coverage.txt
 # Go workspace file
 go.work
 
-# Config files (keep example)
-config.yaml
-
 # IDE files
 .idea/
 .vscode/

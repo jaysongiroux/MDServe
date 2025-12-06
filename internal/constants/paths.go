@@ -14,5 +14,5 @@ const (
 )
 
 const (
-	DemoReadmeURL = "https://raw.githubusercontent.com/jaysongiroux/mdserve/main/README.md"
+	DemoReadmeURL = "https://raw.githubusercontent.com/jaysongiroux/MDServe/refs/heads/master/README.md"
 )

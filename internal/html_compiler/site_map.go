@@ -90,7 +90,8 @@ func GenerateSiteMap(markdownFilePath string, siteConfig *config.SiteConfig) (*[
 		}
 		metadata, err := GetMetadata(string(markdownContent))
 		if err != nil {
-			return nil, fmt.Errorf("failed to get metadata for file %s: %v", file, err)
+			logger.Warn("failed to get metadata for file %s: %v", file, err)
+			metadata = nil
 		}
 
 		var lastModifiedDate time.Time

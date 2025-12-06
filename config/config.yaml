@@ -1,0 +1,33 @@
+# Configuration File
+# Purpose: Define system wide settings such as HTML compilation mode, caching mode, etc.
+
+# Server Settings
+port: 8080
+host: 127.0.0.1
+
+# HTML Compilation Settings
+# static - MD files are compiled into a HTML files when the service starts. More performant but less flexible.
+# live - MD files are loaded when requested. Less performant but more flexible.
+html_compilation_mode: static
+
+# Define the locations of the various user-defined directories
+content_path: content
+assets_path: assets
+user_static_path: user-static
+templates_path: templates
+
+# Path where static files are generated
+generated_path: .static
+
+# Image optimization settings
+# all images that are found in the assets folder will be converted to webp
+# format and optimized for the given quality
+optimize_images: true
+optimize_images_quality: 80
+
+# NOTE: CHANGE THIS TO FALSE
+# This copies the repo's README to the asset's folder to be treated as a home page
+demo: true
+
+# log level
+log_level: debug

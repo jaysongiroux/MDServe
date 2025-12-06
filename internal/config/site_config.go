@@ -1,9 +1,6 @@
 package config
 
 import (
-	"os"
-
-	"github.com/jaysongiroux/mdserve/internal/constants"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -67,13 +64,13 @@ const (
 )
 
 func LoadSiteConfig() (*SiteConfig, error) {
-	yamlFile, err := os.ReadFile(constants.SiteConfigPath)
+	configContent, err := GetConfigContent(ConfigTypeSite)
 	if err != nil {
 		return nil, err
 	}
 
 	var siteConfig SiteConfig
-	err = yaml.Unmarshal(yamlFile, &siteConfig)
+	err = yaml.Unmarshal([]byte(configContent), &siteConfig)
 	if err != nil {
 		return nil, err
 	}
