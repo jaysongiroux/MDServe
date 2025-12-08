@@ -52,16 +52,34 @@ jobs:
         with:
           go-version: '1.25.4'
 
+      - name: Install cross-compilation dependencies
+        if: matrix.goos == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu
+
       - name: Build
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
-          CGO_ENABLED: 1
         run: |
           BINARY_NAME=mdserve-${{ matrix.goos }}-${{ matrix.goarch }}
           if [ "${{ matrix.goos }}" = "windows" ]; then
             BINARY_NAME+=".exe"
           fi
+          
+          # Enable CGO only for Linux builds
+          if [ "${{ matrix.goos }}" = "linux" ]; then
+            export CGO_ENABLED=1
+            if [ "${{ matrix.goarch }}" = "arm64" ]; then
+              export CC=aarch64-linux-gnu-gcc
+            else
+              export CC=gcc
+            fi
+          else
+            export CGO_ENABLED=0
+          fi
+          
           go build -o $BINARY_NAME main.go
 
       - name: Upload Artifact

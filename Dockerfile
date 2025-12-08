@@ -1,5 +1,5 @@
 # Build stage
-FROM golang:1.25-alpine AS builder
+FROM --platform=linux/amd64 golang:1.25-alpine AS builder
 
 # Install build dependencies for CGO
 RUN apk add --no-cache gcc musl-dev
@@ -16,10 +16,11 @@ RUN go mod download
 COPY . .
 
 # Build the binary with CGO enabled (required for webp package)
-RUN CGO_ENABLED=1 GOOS=linux go build -o /build/mdserve main.go
+# Set CC to use the musl gcc compiler explicitly
+RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 CC=gcc go build -o /build/mdserve main.go
 
 # Runtime stage
-FROM alpine:latest
+FROM --platform=linux/amd64 alpine:latest
 
 # Install runtime dependencies (git required for remote content fetching)
 RUN apk --no-cache add ca-certificates git
