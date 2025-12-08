@@ -53,10 +53,13 @@ jobs:
           go-version: '1.25.4'
 
       - name: Install cross-compilation dependencies
-        if: matrix.goos == 'linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc-aarch64-linux-gnu
+          if [ "${{ matrix.goos }}" = "linux" ]; then
+            sudo apt-get install -y gcc-aarch64-linux-gnu
+          elif [ "${{ matrix.goos }}" = "windows" ]; then
+            sudo apt-get install -y mingw-w64
+          fi
 
       - name: Build
         env:
@@ -68,7 +71,7 @@ jobs:
             BINARY_NAME+=".exe"
           fi
           
-          # Enable CGO only for Linux builds
+          # Configure CGO based on target platform
           if [ "${{ matrix.goos }}" = "linux" ]; then
             export CGO_ENABLED=1
             if [ "${{ matrix.goarch }}" = "arm64" ]; then
@@ -76,7 +79,13 @@ jobs:
             else
               export CC=gcc
             fi
+          elif [ "${{ matrix.goos }}" = "windows" ]; then
+            export CGO_ENABLED=1
+            if [ "${{ matrix.goarch }}" = "amd64" ]; then
+              export CC=x86_64-w64-mingw32-gcc
+            fi
           else
+            # Darwin - CGO cross-compilation from Linux is complex, disable it
             export CGO_ENABLED=0
           fi
           
