@@ -89,16 +89,6 @@ func createGitRemoteContentDirectory() (string, error) {
 	return GitRemoteContentDirectory, nil
 }
 
-func checkIfGitRemoteContentDirectoryExists() (bool, error) {
-	logger.Debug("Checking if git remote content directory exists at %s", GitRemoteContentDirectory)
-	if _, err := os.Stat(GitRemoteContentDirectory); os.IsNotExist(err) {
-		logger.Debug("Git remote content directory does not exist at %s", GitRemoteContentDirectory)
-		return false, nil
-	}
-	logger.Debug("Git remote content directory exists at %s", GitRemoteContentDirectory)
-	return true, nil
-}
-
 func pullLatestGitRemoteContent(branch string, directory string) error {
 	// open the repository
 	repo, err := openGitRepository(directory)
@@ -107,42 +97,20 @@ func pullLatestGitRemoteContent(branch string, directory string) error {
 		return err
 	}
 
-	// pull down the latest changes
-	err = repo.Fetch(&git.FetchOptions{
-		RemoteName: "origin",
-	})
-	logger.Debug("Pulling down the latest changes from branch %s", branch)
-
-	// ignore already up-to-date error
-	if err != nil {
-		if strings.Contains(err.Error(), ErrAlreadyUpToDate) {
-			logger.Debug("Branch %s is already up-to-date", branch)
-		} else {
-			logger.Error("Failed to pull down the latest changes from branch %s: %v", branch, err)
-			return err
-		}
-	}
-
 	worktree, err := repo.Worktree()
 	if err != nil {
 		logger.Error("Failed to get worktree: %v", err)
 		return err
 	}
-	logger.Debug("Successfully opened git repository at %s", directory)
 
+	logger.Debug("Pulling the latest changes from branch %s", branch)
 	branchRefName := plumbing.NewBranchReferenceName(branch)
-	err = worktree.Checkout(&git.CheckoutOptions{
-		Branch: branchRefName,
-	})
-	if err != nil {
-		logger.Error("Failed to checkout branch %s: %v", branch, err)
-		return err
-	}
-	logger.Debug("Successfully checked out branch %s", branch)
-
 	err = worktree.Pull(&git.PullOptions{
-		RemoteName: "origin",
+		RemoteName:    "origin",
+		ReferenceName: branchRefName,
+		Force:         true,
 	})
+
 	if err != nil {
 		if strings.Contains(err.Error(), ErrAlreadyUpToDate) {
 			logger.Debug("Branch %s is already up-to-date", branch)
@@ -199,8 +167,9 @@ func HandleGitRemoteContent(serverConfig *config.ServerConfig) error {
 		return nil
 	}
 
-	exists, err := checkIfGitRemoteContentDirectoryExists()
+	exists, err := files.CheckIfDirectoryExists(GitRemoteContentDirectory)
 	if err != nil {
+		logger.Error("Failed to check if git remote content directory exists: %v", err)
 		return err
 	}
 

@@ -21,8 +21,8 @@ RUN CGO_ENABLED=1 GOOS=linux go build -o /build/mdserve main.go
 # Runtime stage
 FROM alpine:latest
 
-# Install runtime dependencies
-RUN apk --no-cache add ca-certificates
+# Install runtime dependencies (git required for remote content fetching)
+RUN apk --no-cache add ca-certificates git
 
 WORKDIR /app
 

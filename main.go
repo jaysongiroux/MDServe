@@ -1,5 +1,10 @@
 package main
 
+// Abstraction layer for zap logger
+// Provides a simple interface for logging messages
+// with different levels of verbosity
+// and a cron logger adapter for cron jobs
+
 import (
 	"html/template"
 	"net/http"
@@ -19,9 +24,10 @@ import (
 	htmlcompiler "github.com/jaysongiroux/mdserve/internal/html_compiler"
 	"github.com/jaysongiroux/mdserve/internal/logger"
 	"github.com/joho/godotenv"
+	"github.com/robfig/cron/v3"
 )
 
-func prelimSetup() (*handler.App, error) {
+func prelimSetup(callerName string) (*handler.App, error) {
 	appLogger := logger.New("Initial Setup", logger.DebugLevel)
 
 	app := &handler.App{
@@ -37,49 +43,43 @@ func prelimSetup() (*handler.App, error) {
 
 	serverConfig, err := config.LoadServerConfig()
 	if err != nil {
-		appLogger.Error("Failed to load server config: %v", err)
-		panic(err)
+		appLogger.Fatal("Failed to load server config: %v", err)
 	}
 	app.ServerConfig = serverConfig
 
 	siteConfig, err := config.LoadSiteConfig()
 	if err != nil {
-		appLogger.Error("Failed to load site config: %v", err)
-		panic(err)
+		appLogger.Fatal("Failed to load site config: %v", err)
 	}
 	app.SiteConfig = siteConfig
 
 	err = logger.Init(app.ServerConfig.LogLevel)
 	if err != nil {
-		appLogger.Error("Failed to initialize logger: %v", err)
-		panic(err)
+		appLogger.Fatal("Failed to initialize logger: %v", err)
 	}
 	defer logger.Sync()
 
-	appLogger = logger.New("Main", app.ServerConfig.LogLevel)
+	appLogger = logger.New(callerName, app.ServerConfig.LogLevel)
 	app.Logger = appLogger
 
 	if app.ServerConfig.Demo {
 		err = demo.HandleDemoEnabled(app)
 		if err != nil {
-			appLogger.Error("Failed to handle demo mode: %v", err)
-			panic(err)
+			appLogger.Fatal("Failed to handle demo mode: %v", err)
 		}
 	}
 
 	if app.ServerConfig.GitRemoteContentURL != "" {
 		err = git.HandleGitRemoteContent(app.ServerConfig)
 		if err != nil {
-			appLogger.Error("Failed to handle git remote content: %v", err)
-			panic(err)
+			appLogger.Fatal("Failed to handle git remote content: %v", err)
 		}
 	}
 
 	// Delete the generated path
 	err = files.DeleteDirectory(app.ServerConfig.GeneratedPath)
 	if err != nil {
-		appLogger.Error("Failed to delete generated path: %v", err)
-		panic(err)
+		appLogger.Fatal("Failed to delete generated path: %v", err)
 	}
 
 	// if HTML Compilation mode is static, compile the HTML files
@@ -87,23 +87,20 @@ func prelimSetup() (*handler.App, error) {
 		appLogger.Info("Compiling static HTML files")
 		mdFiles, err := htmlcompiler.GetMDFiles(app.ServerConfig.ContentPath)
 		if err != nil {
-			appLogger.Error("Failed to get MD files: %v", err)
-			panic(err)
+			appLogger.Fatal("Failed to get MD files: %v", err)
 		}
 
 		for _, mdFile := range mdFiles {
 			htmlFile, err := htmlcompiler.CompileHTMLFile(mdFile, app.SiteConfig)
 			appLogger.Debug("Compiling HTML file: %s", mdFile)
 			if err != nil {
-				appLogger.Error("Failed to compile HTML file: %v", err)
-				panic(err)
+				appLogger.Fatal("Failed to compile HTML file: %v", err)
 			}
 
 			// Calculate relative path from content directory to preserve folder structure
 			relPath, err := filepath.Rel(app.ServerConfig.ContentPath, mdFile)
 			if err != nil {
-				appLogger.Error("Failed to get relative path for %s: %v", mdFile, err)
-				panic(err)
+				appLogger.Fatal("Failed to get relative path for %s: %v", mdFile, err)
 			}
 
 			// save the HTML file to the compiled HTML path
@@ -113,8 +110,7 @@ func prelimSetup() (*handler.App, error) {
 
 			err = htmlcompiler.WriteHTMLFile(savePath, relPath, htmlFile)
 			if err != nil {
-				appLogger.Error("Failed to write HTML file: %v", err)
-				panic(err)
+				appLogger.Fatal("Failed to write HTML file: %v", err)
 			}
 		}
 
@@ -127,35 +123,30 @@ func prelimSetup() (*handler.App, error) {
 	logger.Info("Moving assets to generated path: %s", app.AssetsGeneratedPath)
 	err = assets.MoveAssets(app.ServerConfig.AssetsPath, app.AssetsGeneratedPath)
 	if err != nil {
-		appLogger.Error("Failed to move assets: %v", err)
-		panic(err)
+		appLogger.Fatal("Failed to move assets: %v", err)
 	}
 
 	// get all the assets that have been moved to the generated assets path
 	allAssets, err := assets.GetAssets(app.AssetsGeneratedPath)
 	if err != nil {
-		appLogger.Error("Failed to get all assets: %v", err)
-		panic(err)
+		appLogger.Fatal("Failed to get all assets: %v", err)
 	}
 
 	// find all assets that can be optimized
 	optimizableAssets, err := assets.GetOptimizableAssets(allAssets)
 	if err != nil {
-		appLogger.Error("Failed to get optimizable assets: %v", err)
-		panic(err)
+		appLogger.Fatal("Failed to get optimizable assets: %v", err)
 	}
 
 	// optimize all assets that can be optimized
 	for _, asset := range optimizableAssets {
 		err = assets.ConvertToWebP(asset, app.ServerConfig.OptimizeImages, app.ServerConfig.OptimizeImagesQuality)
 		if err != nil {
-			appLogger.Error("Failed to convert asset to WebP: %v", err)
-			panic(err)
+			appLogger.Fatal("Failed to convert asset to WebP: %v", err)
 		}
 		err = assets.DeleteAsset(asset)
 		if err != nil {
-			appLogger.Error("Failed to delete asset: %v", err)
-			panic(err)
+			appLogger.Fatal("Failed to delete asset: %v", err)
 		}
 	}
 	logger.Info("Assets optimized successfully")
@@ -165,8 +156,7 @@ func prelimSetup() (*handler.App, error) {
 	logger.Info("Moving user-static assets to generated path: %s", app.UserStaticGeneratedPath)
 	err = assets.MoveAssets(app.ServerConfig.UserStaticPath, app.UserStaticGeneratedPath)
 	if err != nil {
-		appLogger.Error("Failed to move user-static assets: %v", err)
-		panic(err)
+		appLogger.Fatal("Failed to move user-static assets: %v", err)
 	}
 	logger.Info("User-static assets moved successfully")
 
@@ -174,8 +164,7 @@ func prelimSetup() (*handler.App, error) {
 	logger.Info("Moving templates to generated path: %s", app.TemplatesGeneratedPath)
 	err = assets.MoveAssets(app.ServerConfig.TemplatesPath, app.TemplatesGeneratedPath)
 	if err != nil {
-		appLogger.Error("Failed to move templates: %v", err)
-		panic(err)
+		appLogger.Fatal("Failed to move templates: %v", err)
 	}
 	logger.Info("Templates moved successfully")
 
@@ -186,13 +175,11 @@ func prelimSetup() (*handler.App, error) {
 	// generate the site map
 	siteMap, err := htmlcompiler.GenerateSiteMap(app.ServerConfig.ContentPath, app.SiteConfig)
 	if err != nil {
-		appLogger.Error("Failed to generate site map: %v", err)
-		panic(err)
+		appLogger.Fatal("Failed to generate site map: %v", err)
 	}
 	err = htmlcompiler.SaveSiteMap(siteMap, siteMapPath)
 	if err != nil {
-		appLogger.Error("Failed to save site map: %v", err)
-		panic(err)
+		appLogger.Fatal("Failed to save site map: %v", err)
 	}
 	logger.Info("Site map saved successfully to %s", siteMapPath)
 
@@ -206,10 +193,9 @@ func main() {
 		appLogger.Warn("No .env file found or unable to load it, using system environment variables")
 	}
 
-	app, err := prelimSetup()
+	app, err := prelimSetup("Main")
 	if err != nil {
 		appLogger.Fatal("Failed to perform prelim setup: %v", err)
-		panic(err)
 	}
 
 	app.Logger.Info("Loading HTML templates...")
@@ -242,6 +228,33 @@ func main() {
 		if err != nil {
 			app.Logger.Fatal("Failed to parse layout templates: %v", err)
 		}
+	}
+
+	if app.ServerConfig.GenerationCronEnabled {
+		app.Logger.Info("Generation cron is enabled. Starting cron scheduler using interval %s...", app.ServerConfig.GenerationCronInterval)
+		// Initialize and start cron scheduler
+		cronLogger := app.Logger.ToCronLogger(app.ServerConfig.LogLevel == logger.DebugLevel)
+		c := cron.New(cron.WithChain(
+			cron.Recover(cronLogger),
+		))
+
+		// Add hourly job
+		_, err = c.AddFunc(app.ServerConfig.GenerationCronInterval, func() {
+			app.Logger.Info("Running hourly cron job...")
+			_, err = prelimSetup("Generation Cron")
+			if err != nil {
+				app.Logger.Fatal("Failed to perform prelim setup: %v", err)
+			}
+		})
+		if err != nil {
+			app.Logger.Fatal("Failed to schedule cron job: %v", err)
+		}
+
+		c.Start()
+		app.Logger.Info("Cron scheduler started - hourly job registered")
+
+		// Ensure cron stops when main exits
+		defer c.Stop()
 	}
 
 	mux := http.NewServeMux()

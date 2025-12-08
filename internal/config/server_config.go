@@ -26,6 +26,8 @@ type ServerConfig struct {
 	GitRemoteContentBranch              string                        `yaml:"git_remote_content_branch"`
 	GitRemoteContentAssetsDirectory     string                        `yaml:"git_remote_content_assets_directory"`
 	GitRemoteContentUserStaticDirectory string                        `yaml:"git_remote_content_user_static_directory"`
+	GenerationCronEnabled               bool                          `yaml:"generation_cron_enabled"`
+	GenerationCronInterval              string                        `yaml:"generation_cron_interval"`
 }
 
 func LoadServerConfig() (*ServerConfig, error) {

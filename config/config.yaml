@@ -20,7 +20,7 @@ templates_path: templates
 # null means local content path
 # otherwise, the content will be fetched from the remote path
 # url only supports git urls (e.g. https://github.com/jaysongiroux/mdserve.git)
-git_remote_content_path: git@github.com:jaysongiroux/MDServe.git
+git_remote_content_path: https://github.com/jaysongiroux/MDServe.git
 # the directory in the remote path to fetch the content
 # if the remote url is provided, this must be a subdirectory of the remote path
 # ex. content/md_files
@@ -54,3 +54,17 @@ demo: false
 
 # log level
 log_level: debug
+
+# cron configuration
+# this cron will run at your specified interval which runs the preliminary setup process
+# this process converts markdown files to HTML, optimizes assets, generates the sitemap, and 
+# if configured, pulls down the latest changes from the remote content path
+# Scenarions:
+# - you use git to manage your content, assets, user-static, etc:
+#   - Enable this cron and set the html compilation mode to static
+#   - when a push is made to your remote path, the cron will pull down these changes and regenerate the static files within the interval
+generation_cron_enabled: true
+# Format supported:
+#  - "standard" cron format: https://en.wikipedia.org/wiki/Cron ex. "0 12 * * *"
+#  - "robfig" cron format: https://github.com/robfig/cron  ex. "@hourly"
+generation_cron_interval: "@hourly"

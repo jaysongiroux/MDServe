@@ -190,3 +190,31 @@ func Sync() error {
 	}
 	return nil
 }
+
+type CronLoggerAdapter struct {
+	logger  *Logger
+	verbose bool
+}
+
+func (c *CronLoggerAdapter) Printf(format string, args ...interface{}) {
+	if c.verbose {
+		c.logger.Debug(format, args...)
+	} else {
+		c.logger.Info(format, args...)
+	}
+}
+
+func (c *CronLoggerAdapter) Info(msg string, keysAndValues ...interface{}) {
+	c.logger.Info("%s %v", msg, keysAndValues)
+}
+
+func (c *CronLoggerAdapter) Error(err error, msg string, keysAndValues ...interface{}) {
+	c.logger.Error("%s: %v %v", msg, err, keysAndValues)
+}
+
+func (l *Logger) ToCronLogger(verbose bool) *CronLoggerAdapter {
+	return &CronLoggerAdapter{
+		logger:  l,
+		verbose: verbose,
+	}
+}

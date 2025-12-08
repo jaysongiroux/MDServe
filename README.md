@@ -29,6 +29,8 @@ It is designed to be lightweight and portable—a single binary is all you need 
   * **Configurable Rendering Engine:** Choose your performance strategy via `config.yaml`:
       * **Live Mode:** Parses Markdown on every request. Changes to content are visible immediately upon browser refresh.
       * **Static Mode:** Parses all content at startup and generates a sitemap. Serves pages with optimal performance (requires restart to update content).
+  * **Git Remote Content:** Fetch content from a remote Git repository. Automatically pulls updates from configured branches and syncs content, assets, and user static files.
+  * **Scheduled Content Generation:** Optional cron job for automated content regeneration at configured intervals. Perfect for keeping git-sourced content up-to-date without server restarts.
   * **Custom Layout System:** Define regex-based page matching to apply custom layouts. Perfect for blog listings, article pages, or any specialized content structure.
   * **JSON Metadata Support:** Add JSON metadata in HTML comments at the top of Markdown files with support for tags, authors, descriptions, creation dates, and custom fields.
   * **Pagination & Filtering:** Built-in support for paginated content lists with client-side tag filtering.
@@ -54,6 +56,7 @@ Located in the `/config` directory:
       * Defines paths for content, assets, templates, and generated files.
       * Configures image optimization settings.
       * Configures git remote content source (optional).
+      * Configures generation cron for scheduled content regeneration (optional).
   * **`site-config.yaml` (Content):** Controls how the site looks and behaves.
       * Defines Navbar links with optional dropdown menus.
       * Defines Footer content and links.
@@ -129,6 +132,46 @@ This feature is useful for:
 - Managing content in a separate repository
 - Allowing non-technical users to edit content via Git platforms
 - Deploying the same server binary with different content sources
+
+### 4. Generation Cron
+
+MDServe supports scheduled regeneration of content through a configurable cron job. This is particularly useful when using git remote content or when content files are updated externally.
+
+**Configuration in `config.yaml`:**
+
+```yaml
+# Cron configuration
+generation_cron_enabled: true
+generation_cron_interval: "@hourly"
+```
+
+**Configuration Options:**
+
+- **`generation_cron_enabled`**: Enable or disable the generation cron (default: `false`)
+- **`generation_cron_interval`**: Cron schedule interval
+
+**Supported Interval Formats:**
+
+- **Standard cron format**: `"0 12 * * *"` (see [cron format](https://en.wikipedia.org/wiki/Cron))
+- **Robfig descriptors**: `"@hourly"`, `"@daily"`, `"@weekly"`, `"@monthly"` (see [robfig/cron](https://github.com/robfig/cron))
+
+**What the Cron Does:**
+
+When triggered, the generation cron runs the preliminary setup process:
+1. Pulls the latest changes from git remote content (if configured)
+2. Converts Markdown files to HTML
+3. Optimizes images in the assets directory
+4. Generates the sitemap
+5. Copies assets to the generated directory
+
+**Recommended Use Case:**
+
+When using git remote content with static compilation mode:
+1. Set `html_compilation_mode: static`
+2. Set `generation_cron_enabled: true`
+3. Set an appropriate `generation_cron_interval` (e.g., `"@hourly"`)
+
+When content is pushed to your remote repository, the cron will automatically pull the changes and regenerate all static files at the configured interval. This provides a balance between static site performance and relatively fresh content updates without requiring server restarts.
 
 -----
 
@@ -218,7 +261,7 @@ MDServe is written in Go. For the best development experience, we recommend usin
     air
     ```
 
-*Note: If your `html_compilation_mode` is set to `live`, you do not need to restart the server to see changes made to Markdown files. Simply refresh your browser. In `static` mode, you must restart the server to regenerate the sitemap and see content updates.*
+*Note: If your `html_compilation_mode` is set to `live`, you do not need to restart the server to see changes made to Markdown files. Simply refresh your browser. In `static` mode, you must restart the server to regenerate the sitemap and see content updates, unless you have the generation cron enabled which will automatically regenerate content at the configured interval.*
 
 -----
 
