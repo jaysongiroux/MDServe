@@ -14,25 +14,25 @@ import (
 	"github.com/jaysongiroux/mdserve/internal/constants"
 	"github.com/jaysongiroux/mdserve/internal/demo"
 	"github.com/jaysongiroux/mdserve/internal/files"
+	"github.com/jaysongiroux/mdserve/internal/git"
 	"github.com/jaysongiroux/mdserve/internal/handler"
 	htmlcompiler "github.com/jaysongiroux/mdserve/internal/html_compiler"
 	"github.com/jaysongiroux/mdserve/internal/logger"
 	"github.com/joho/godotenv"
 )
 
-func main() {
+func prelimSetup() (*handler.App, error) {
 	appLogger := logger.New("Initial Setup", logger.DebugLevel)
-	// Load .env file if it exists
-	if err := godotenv.Load(); err != nil {
-		appLogger.Error("No .env file found or unable to load it, using system environment variables")
-	}
 
 	app := &handler.App{
-		ServerConfig: nil,
-		SiteConfig:   nil,
-		Logger:       nil,
-		Templates:    nil,
-		Handler:      handler.HandlePage,
+		ServerConfig:            nil,
+		SiteConfig:              nil,
+		Logger:                  nil,
+		Templates:               nil,
+		Handler:                 handler.HandlePage,
+		TemplatesGeneratedPath:  "",
+		AssetsGeneratedPath:     "",
+		UserStaticGeneratedPath: "",
 	}
 
 	serverConfig, err := config.LoadServerConfig()
@@ -63,17 +63,23 @@ func main() {
 		err = demo.HandleDemoEnabled(app)
 		if err != nil {
 			appLogger.Error("Failed to handle demo mode: %v", err)
-			return
+			panic(err)
 		}
 	}
 
-	generatedPath := app.ServerConfig.GeneratedPath
+	if app.ServerConfig.GitRemoteContentURL != "" {
+		err = git.HandleGitRemoteContent(app.ServerConfig)
+		if err != nil {
+			appLogger.Error("Failed to handle git remote content: %v", err)
+			panic(err)
+		}
+	}
 
 	// Delete the generated path
-	err = files.DeleteDirectory(generatedPath)
+	err = files.DeleteDirectory(app.ServerConfig.GeneratedPath)
 	if err != nil {
 		appLogger.Error("Failed to delete generated path: %v", err)
-		return
+		panic(err)
 	}
 
 	// if HTML Compilation mode is static, compile the HTML files
@@ -82,7 +88,7 @@ func main() {
 		mdFiles, err := htmlcompiler.GetMDFiles(app.ServerConfig.ContentPath)
 		if err != nil {
 			appLogger.Error("Failed to get MD files: %v", err)
-			return
+			panic(err)
 		}
 
 		for _, mdFile := range mdFiles {
@@ -90,25 +96,25 @@ func main() {
 			appLogger.Debug("Compiling HTML file: %s", mdFile)
 			if err != nil {
 				appLogger.Error("Failed to compile HTML file: %v", err)
-				return
+				panic(err)
 			}
 
 			// Calculate relative path from content directory to preserve folder structure
 			relPath, err := filepath.Rel(app.ServerConfig.ContentPath, mdFile)
 			if err != nil {
 				appLogger.Error("Failed to get relative path for %s: %v", mdFile, err)
-				return
+				panic(err)
 			}
 
 			// save the HTML file to the compiled HTML path
 			// write files to the content path /.html/ preserving directory structure
-			savePath := filepath.Join(generatedPath)
+			savePath := filepath.Join(app.ServerConfig.GeneratedPath)
 			appLogger.Debug("Writing HTML file: %s to %s", relPath, savePath)
 
 			err = htmlcompiler.WriteHTMLFile(savePath, relPath, htmlFile)
 			if err != nil {
 				appLogger.Error("Failed to write HTML file: %v", err)
-				return
+				panic(err)
 			}
 		}
 
@@ -117,26 +123,26 @@ func main() {
 
 	// handle asset optimization
 	logger.Info("Optimizing assets")
-	assetsGeneratedPath := filepath.Join(generatedPath, constants.GeneratedAssetsPath)
-	logger.Info("Moving assets to generated path: %s", assetsGeneratedPath)
-	err = assets.MoveAssets(app.ServerConfig.AssetsPath, assetsGeneratedPath)
+	app.AssetsGeneratedPath = filepath.Join(app.ServerConfig.GeneratedPath, constants.GeneratedAssetsPath)
+	logger.Info("Moving assets to generated path: %s", app.AssetsGeneratedPath)
+	err = assets.MoveAssets(app.ServerConfig.AssetsPath, app.AssetsGeneratedPath)
 	if err != nil {
 		appLogger.Error("Failed to move assets: %v", err)
-		return
+		panic(err)
 	}
 
 	// get all the assets that have been moved to the generated assets path
-	allAssets, err := assets.GetAssets(assetsGeneratedPath)
+	allAssets, err := assets.GetAssets(app.AssetsGeneratedPath)
 	if err != nil {
 		appLogger.Error("Failed to get all assets: %v", err)
-		return
+		panic(err)
 	}
 
 	// find all assets that can be optimized
 	optimizableAssets, err := assets.GetOptimizableAssets(allAssets)
 	if err != nil {
 		appLogger.Error("Failed to get optimizable assets: %v", err)
-		return
+		panic(err)
 	}
 
 	// optimize all assets that can be optimized
@@ -144,51 +150,67 @@ func main() {
 		err = assets.ConvertToWebP(asset, app.ServerConfig.OptimizeImages, app.ServerConfig.OptimizeImagesQuality)
 		if err != nil {
 			appLogger.Error("Failed to convert asset to WebP: %v", err)
-			return
+			panic(err)
 		}
 		err = assets.DeleteAsset(asset)
 		if err != nil {
 			appLogger.Error("Failed to delete asset: %v", err)
-			return
+			panic(err)
 		}
 	}
 	logger.Info("Assets optimized successfully")
 
 	// move all user-static assets to the generated path
-	userStaticGeneratedPath := filepath.Join(generatedPath, constants.UserStaticPath)
-	logger.Info("Moving user-static assets to generated path: %s", userStaticGeneratedPath)
-	err = assets.MoveAssets(app.ServerConfig.UserStaticPath, userStaticGeneratedPath)
+	app.UserStaticGeneratedPath = filepath.Join(app.ServerConfig.GeneratedPath, constants.UserStaticPath)
+	logger.Info("Moving user-static assets to generated path: %s", app.UserStaticGeneratedPath)
+	err = assets.MoveAssets(app.ServerConfig.UserStaticPath, app.UserStaticGeneratedPath)
 	if err != nil {
 		appLogger.Error("Failed to move user-static assets: %v", err)
-		return
+		panic(err)
 	}
 	logger.Info("User-static assets moved successfully")
 
-	templatesGeneratedPath := filepath.Join(generatedPath, constants.TemplatesPath)
-	logger.Info("Moving templates to generated path: %s", templatesGeneratedPath)
-	err = assets.MoveAssets(app.ServerConfig.TemplatesPath, templatesGeneratedPath)
+	app.TemplatesGeneratedPath = filepath.Join(app.ServerConfig.GeneratedPath, constants.TemplatesPath)
+	logger.Info("Moving templates to generated path: %s", app.TemplatesGeneratedPath)
+	err = assets.MoveAssets(app.ServerConfig.TemplatesPath, app.TemplatesGeneratedPath)
 	if err != nil {
 		appLogger.Error("Failed to move templates: %v", err)
-		return
+		panic(err)
 	}
 	logger.Info("Templates moved successfully")
 
-	logger.Info("Generated path: %s", generatedPath)
-	siteMapPath := filepath.Join(generatedPath, constants.SiteMapPath)
+	logger.Info("Generated path: %s", app.ServerConfig.GeneratedPath)
+	siteMapPath := filepath.Join(app.ServerConfig.GeneratedPath, constants.SiteMapPath)
 	logger.Info("Site map path: %s", siteMapPath)
 
 	// generate the site map
 	siteMap, err := htmlcompiler.GenerateSiteMap(app.ServerConfig.ContentPath, app.SiteConfig)
 	if err != nil {
 		appLogger.Error("Failed to generate site map: %v", err)
-		return
+		panic(err)
 	}
 	err = htmlcompiler.SaveSiteMap(siteMap, siteMapPath)
 	if err != nil {
 		appLogger.Error("Failed to save site map: %v", err)
-		return
+		panic(err)
 	}
 	logger.Info("Site map saved successfully to %s", siteMapPath)
+
+	return app, nil
+}
+
+func main() {
+	appLogger := logger.New("Initial Setup", logger.DebugLevel)
+	// Load .env file if it exists
+	if err := godotenv.Load(); err != nil {
+		appLogger.Warn("No .env file found or unable to load it, using system environment variables")
+	}
+
+	app, err := prelimSetup()
+	if err != nil {
+		appLogger.Fatal("Failed to perform prelim setup: %v", err)
+		panic(err)
+	}
 
 	app.Logger.Info("Loading HTML templates...")
 
@@ -208,13 +230,13 @@ func main() {
 			return strings.Join(array, ", ")
 		},
 	})
-	app.Templates, err = app.Templates.ParseGlob(templatesGeneratedPath + "/*.html")
+	app.Templates, err = app.Templates.ParseGlob(app.TemplatesGeneratedPath + "/*.html")
 	if err != nil {
 		app.Logger.Fatal("Failed to parse templates: %v", err)
 	}
 
 	// load templates from layout_templates subdirectory
-	layoutTemplatesPath := filepath.Join(templatesGeneratedPath, "layout_templates")
+	layoutTemplatesPath := filepath.Join(app.TemplatesGeneratedPath, "layout_templates")
 	if _, err := os.Stat(layoutTemplatesPath); err == nil {
 		app.Templates, err = app.Templates.ParseGlob(layoutTemplatesPath + "/*.html")
 		if err != nil {
@@ -225,7 +247,7 @@ func main() {
 	mux := http.NewServeMux()
 
 	// Serve Optimized System Assets (Mapped to /assets/)
-	mux.Handle("GET /assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir(assetsGeneratedPath))))
+	mux.Handle("GET /assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir(app.AssetsGeneratedPath))))
 
 	// Serve User Static Assets (Mapped to /user-static/)
 	// Assuming this config exists in ServerConfig

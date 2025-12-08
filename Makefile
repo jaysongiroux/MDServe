@@ -6,6 +6,8 @@ run:
 
 clean:
 	rm -rf bin/
+	rm -rf .static/
+	rm -rf .git-remote-content/
 
 build-docker:
 	docker build -t mdserve .

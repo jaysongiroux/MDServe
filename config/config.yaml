@@ -16,6 +16,29 @@ assets_path: assets
 user_static_path: user-static
 templates_path: templates
 
+# remote content path
+# null means local content path
+# otherwise, the content will be fetched from the remote path
+# url only supports git urls (e.g. https://github.com/jaysongiroux/mdserve.git)
+git_remote_content_path: git@github.com:jaysongiroux/MDServe.git
+# the directory in the remote path to fetch the content
+# if the remote url is provided, this must be a subdirectory of the remote path
+# ex. content/md_files
+git_remote_content_directory: content
+# the directory in the remote path to fetch the assets
+# if null, assets from the remote path will NOT be copied from the remote path
+# if a remote url is provided, this must be a subdirectory of the remote path
+# site assets such as icons, logos, etc should be placed in this directory as well since the remote will overwrite the local assets
+git_remote_content_assets_directory: assets
+# the directory in the remote path to fetch the user static assets
+# if null, user static assets from the remote path will NOT be copied from the remote path
+# if a remote url is provided, this must be a subdirectory of the remote path
+# NOTE: user static assets such as custom.css and custom.js should be placed in this directory as well since the remote will overwrite the local user static assets
+git_remote_content_user_static_directory: user-static
+# the branch to fetch the content from
+# required if a remote url is provided
+git_remote_content_branch: master
+
 # Path where static files are generated
 generated_path: .static
 
@@ -27,7 +50,7 @@ optimize_images_quality: 80
 
 # NOTE: CHANGE THIS TO FALSE
 # This copies the repo's README to the asset's folder to be treated as a home page
-demo: true
+demo: false
 
 # log level
 log_level: debug

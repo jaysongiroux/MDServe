@@ -11,7 +11,7 @@ It is designed to be lightweight and portable—a single binary is all you need 
 ## Quick Start
 
 1. Clone the repository or download the binary
-2. Create your content in the `/content` directory as Markdown files
+2. Create your content in the `/content` directory as Markdown files (or configure git remote content in `/config/config.yaml`)
 3. Configure your site in `/config/site-config.yaml`
 4. Run the server:
    ```bash
@@ -53,6 +53,7 @@ Located in the `/config` directory:
       * Sets the HTML compilation mode (`live` vs `static`).
       * Defines paths for content, assets, templates, and generated files.
       * Configures image optimization settings.
+      * Configures git remote content source (optional).
   * **`site-config.yaml` (Content):** Controls how the site looks and behaves.
       * Defines Navbar links with optional dropdown menus.
       * Defines Footer content and links.
@@ -64,6 +65,70 @@ Located in the `/config` directory:
 ### 2. Configuration Management
 
 All configuration is managed through the two YAML files in the `/config` directory. To change settings for different environments (development, production), simply modify these files before starting the server or maintain separate config files for each environment.
+
+**Environment Variables:**
+
+You can override the default config file paths using environment variables:
+
+- **`MD_SERVER_CONFIG_PATH`**: Path or URL to the server config file (default: `config/config.yaml`)
+- **`MD_SITE_CONFIG_PATH`**: Path or URL to the site config file (default: `config/site-config.yaml`)
+
+Both variables support:
+- Local file paths (e.g., `/path/to/config.yaml`)
+- HTTP/HTTPS URLs (e.g., `https://example.com/config.yaml`)
+
+Example usage:
+
+```bash
+# Using local config files
+MD_SERVER_CONFIG_PATH=/etc/mdserve/config.yaml ./mdserve
+
+# Using remote config files
+MD_SERVER_CONFIG_PATH=https://example.com/configs/server.yaml \
+MD_SITE_CONFIG_PATH=https://example.com/configs/site.yaml \
+./mdserve
+```
+
+### 3. Git Remote Content
+
+MDServe supports fetching content from a remote Git repository, allowing you to host your content separately from your server. This is configured in `config.yaml`:
+
+```yaml
+# Git remote content configuration
+git_remote_content_path: git@github.com:username/repo.git
+git_remote_content_directory: content
+git_remote_content_assets_directory: assets
+git_remote_content_user_static_directory: user-static
+git_remote_content_branch: master
+```
+
+**Configuration Options:**
+
+- **`git_remote_content_path`**: Git URL to fetch content from (supports both HTTPS and SSH). Set to empty/null to use local content.
+- **`git_remote_content_directory`**: Subdirectory in the remote repository containing Markdown content files (e.g., `content`).
+- **`git_remote_content_assets_directory`**: Subdirectory in the remote repository containing assets (images, logos, icons, etc.). Set to empty/null to skip syncing remote assets.
+- **`git_remote_content_user_static_directory`**: Subdirectory in the remote repository containing user static files (`custom.css`, `custom.js`, etc.). Set to empty/null to skip syncing remote user static files.
+- **`git_remote_content_branch`**: Branch to fetch content from (required if `git_remote_content_path` is set).
+
+**Requirements:**
+
+- At least one directory (`git_remote_content_directory`, `git_remote_content_assets_directory`, or `git_remote_content_user_static_directory`) must be configured when using git remote content.
+- Branch name is required when git remote content URL is provided.
+- Git remote content and demo mode are mutually exclusive.
+
+**How It Works:**
+
+When git remote content is configured:
+1. On server startup, MDServe clones the remote repository to `.git-remote-content/`
+2. On subsequent startups, MDServe pulls the latest changes from the specified branch
+3. Configured directories are synced from the remote repository to their local counterparts
+4. Local directories are cleared and replaced with remote content on each sync
+
+This feature is useful for:
+- Separating content management from server deployment
+- Managing content in a separate repository
+- Allowing non-technical users to edit content via Git platforms
+- Deploying the same server binary with different content sources
 
 -----
 
@@ -82,6 +147,7 @@ The system expects a specific folder hierarchy to function:
   * **`/assets`**: System-level static files (images, base CSS, base JS).
   * **`/user-static`**: User-provided assets (like `custom.css` and `custom.js`) that persist across updates.
   * **`/.static`**: Auto-generated files (sitemap.json) created at startup in static mode.
+  * **`/.git-remote-content`**: Auto-generated directory when using git remote content. Contains the cloned repository.
 
 -----
 
@@ -179,7 +245,7 @@ GOOS=linux GOARCH=amd64 go build -o mdserve main.go
 ./mdserve
 ```
 
-Ensure your `config`, `content`, `templates`, `assets`, and `user-static` folders are relative to the binary. The `.static` directory will be auto-generated on startup when running in static mode.
+Ensure your `config`, `templates`, `assets`, and `user-static` folders are relative to the binary. The `content` folder is also required unless you're using git remote content. The `.static` and `.git-remote-content` directories will be auto-generated on startup when needed.
 
 ### Option 2: Docker (Optional)
 
@@ -197,6 +263,15 @@ docker build -t mdserve .
 docker run -p 8080:8080 mdserve
 ```
 
+#### Run with environment variables for remote config:
+
+```bash
+docker run -p 8080:8080 \
+  -e MD_SERVER_CONFIG_PATH=https://example.com/config.yaml \
+  -e MD_SITE_CONFIG_PATH=https://example.com/site-config.yaml \
+  mdserve
+```
+
 #### Run with custom content (using volumes):
 
 Mount your local directories to override the defaults:
@@ -210,7 +285,7 @@ docker run -p 8080:8080 \
   mdserve
 ```
 
-**Note:** Configuration changes require mounting the `/app/config` directory with your modified config files, or rebuilding the Docker image.
+**Note:** Configuration changes require mounting the `/app/config` directory with your modified config files, or rebuilding the Docker image. If using git remote content, you don't need to mount the `/app/content` directory as it will be fetched from the remote repository.
 
 #### Docker Compose (recommended):
 

@@ -9,9 +9,12 @@ import (
 )
 
 type App struct {
-	ServerConfig *config.ServerConfig
-	SiteConfig   *config.SiteConfig
-	Logger       *logger.Logger
-	Templates    *template.Template
-	Handler      func(app *App, w http.ResponseWriter, r *http.Request)
+	ServerConfig            *config.ServerConfig
+	SiteConfig              *config.SiteConfig
+	Logger                  *logger.Logger
+	Templates               *template.Template
+	Handler                 func(app *App, w http.ResponseWriter, r *http.Request)
+	TemplatesGeneratedPath  string
+	AssetsGeneratedPath     string
+	UserStaticGeneratedPath string
 }

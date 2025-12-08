@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/jaysongiroux/mdserve/internal/logger"
 )
 
 func DeleteDirectory(path string) error {
@@ -20,40 +22,117 @@ func GetFileModifiedDate(path string) (time.Time, error) {
 	return info.ModTime(), nil
 }
 
-func CopyFile(sourcePath, destinationPath string, overwrite bool) error {
-	// Open source file
-	src, err := os.Open(sourcePath)
-	if err != nil {
-		return err
+func CheckIfDirectoryExists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if os.IsNotExist(err) {
+		return false, nil
 	}
-	defer src.Close()
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
 
-	// Check destination existence
-	if info, err := os.Stat(destinationPath); err == nil {
+func RecursivelyCopyDirectory(sourcePath string, destinationPath string) error {
+	// Get source info to preserve permissions
+	sourceInfo, err := os.Stat(sourcePath)
+	if err != nil {
+		return fmt.Errorf("failed to stat source: %w", err)
+	}
+
+	// Create destination directory with source permissions
+	logger.Debug("Creating destination directory %s with source permissions %v", destinationPath, sourceInfo.Mode())
+	if err := os.MkdirAll(destinationPath, sourceInfo.Mode()); err != nil {
+		logger.Error("Failed to create destination directory %s with source permissions %v: %v", destinationPath, sourceInfo.Mode(), err)
+		return fmt.Errorf("failed to create destination directory: %w", err)
+	}
+
+	return filepath.Walk(sourcePath, func(path string, info os.FileInfo, err error) error {
+		logger.Debug("Walking source path %s", path)
+		if err != nil {
+			logger.Error("Failed to walk source path %s: %v", sourcePath, err)
+			return err
+		}
+
+		// Calculate relative path from source
+		relPath, err := filepath.Rel(sourcePath, path)
+		if err != nil {
+			logger.Error("Failed to get relative path from source path %s to path %s: %v", sourcePath, path, err)
+			return fmt.Errorf("failed to get relative path: %w", err)
+		}
+
+		// Calculate destination path
+		destPath := filepath.Join(destinationPath, relPath)
+
+		// Handle directories
 		if info.IsDir() {
+			// Create directory with same permissions
+			if err := os.MkdirAll(destPath, info.Mode()); err != nil {
+				logger.Error("Failed to create directory %s with source permissions %v: %v", destPath, info.Mode(), err)
+				return fmt.Errorf("failed to create directory %s: %w", destPath, err)
+			}
+			return nil
+		}
+
+		// Handle files
+		return CopyFile(path, destPath, true)
+	})
+}
+
+func CopyFile(sourcePath, destinationPath string, overwrite bool) error {
+	// Get source file info
+	sourceInfo, err := os.Stat(sourcePath)
+	if err != nil {
+		return fmt.Errorf("failed to stat source file: %w", err)
+	}
+
+	// Check if source is a directory
+	if sourceInfo.IsDir() {
+		return fmt.Errorf("source path is a directory, use RecursivelyCopyDirectory: %s", sourcePath)
+	}
+
+	// Check if destination exists
+	destInfo, err := os.Stat(destinationPath)
+	if err == nil {
+		// Destination exists
+		if destInfo.IsDir() {
 			return fmt.Errorf("destination path is a directory: %s", destinationPath)
 		}
 		if !overwrite {
 			return nil
 		}
 	} else if !os.IsNotExist(err) {
-		// Real error (permissions, IO, etc.)
-		return err
+		return fmt.Errorf("failed to stat destination: %w", err)
 	}
 
 	// Ensure destination directory exists
 	if err := os.MkdirAll(filepath.Dir(destinationPath), 0755); err != nil {
-		return err
+		return fmt.Errorf("failed to create destination directory: %w", err)
 	}
 
-	// Create/overwrite destination file
-	dst, err := os.Create(destinationPath)
+	// Open source file
+	src, err := os.Open(sourcePath)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to open source file: %w", err)
+	}
+	defer src.Close()
+
+	// Create destination file with source permissions
+	dst, err := os.OpenFile(destinationPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, sourceInfo.Mode())
+	if err != nil {
+		return fmt.Errorf("failed to create destination file: %w", err)
 	}
 	defer dst.Close()
 
 	// Perform the copy
-	_, err = io.Copy(dst, src)
-	return err
+	if _, err := io.Copy(dst, src); err != nil {
+		return fmt.Errorf("failed to copy file content: %w", err)
+	}
+
+	// Ensure data is flushed to disk
+	if err := dst.Sync(); err != nil {
+		return fmt.Errorf("failed to sync destination file: %w", err)
+	}
+
+	return nil
 }
