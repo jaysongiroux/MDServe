@@ -9,6 +9,7 @@ require (
 	github.com/go-git/go-git/v6 v6.0.0-20251206100705-e633db5b9a34
 	github.com/joho/godotenv v1.5.1
 	github.com/otiai10/copy v1.14.1
+	github.com/robfig/cron/v3 v3.0.0
 	github.com/yuin/goldmark v1.7.13
 	github.com/yuin/goldmark-highlighting/v2 v2.0.0-20230729083705-37449abec8cc
 	go.abhg.dev/goldmark/mermaid v0.6.0
@@ -43,7 +44,6 @@ require (
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/pjbgf/sha1cd v0.5.0 // indirect
-	github.com/robfig/cron/v3 v3.0.0 // indirect
 	github.com/sergi/go-diff v1.4.0 // indirect
 	github.com/spf13/afero v1.14.0 // indirect
 	github.com/spf13/cast v1.9.2 // indirect
