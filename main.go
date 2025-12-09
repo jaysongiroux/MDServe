@@ -77,7 +77,7 @@ func prelimSetup(callerName string) (*handler.App, error) {
 	}
 
 	// Delete the generated path
-	err = files.DeleteDirectory(app.ServerConfig.GeneratedPath)
+	err = files.DeleteDirectoryContents(app.ServerConfig.GeneratedPath)
 	if err != nil {
 		appLogger.Fatal("Failed to delete generated path: %v", err)
 	}

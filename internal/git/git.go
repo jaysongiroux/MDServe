@@ -263,7 +263,7 @@ func syncDirectory(remotePath, localPath, name string) error {
 	logger.Debug("Copying %s from remote directory %s to local directory %s", name, remotePath, localPath)
 
 	// Delete existing contents
-	if err := files.DeleteDirectory(localPath); err != nil {
+	if err := files.DeleteDirectoryContents(localPath); err != nil {
 		return fmt.Errorf("failed to delete directory %s: %w", localPath, err)
 	}
 	logger.Debug("Successfully deleted the contents of the local directory %s", localPath)

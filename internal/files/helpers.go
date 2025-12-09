@@ -10,10 +10,6 @@ import (
 	"github.com/jaysongiroux/mdserve/internal/logger"
 )
 
-func DeleteDirectory(path string) error {
-	return os.RemoveAll(path)
-}
-
 func GetFileModifiedDate(path string) (time.Time, error) {
 	info, err := os.Stat(path)
 	if err != nil {
@@ -157,5 +153,44 @@ func CopyFile(sourcePath, destinationPath string, overwrite bool) error {
 		return fmt.Errorf("failed to sync destination file: %w", err)
 	}
 
+	return nil
+}
+
+func DeleteDirectoryContents(directoryPath string) error {
+	// Check if the directory exists
+	if _, err := os.Stat(directoryPath); os.IsNotExist(err) {
+		logger.Debug("Directory %s does not exist", directoryPath)
+		return nil
+	}
+
+	logger.Debug("Deleting directory contents of %s", directoryPath)
+
+	// Read all entries in the directory
+	entries, err := os.ReadDir(directoryPath)
+	if err != nil {
+		logger.Error("Failed to read directory %s: %v", directoryPath, err)
+		return fmt.Errorf("failed to read directory: %w", err)
+	}
+
+	// Delete each entry
+	for _, entry := range entries {
+		entryPath := filepath.Join(directoryPath, entry.Name())
+
+		if entry.IsDir() {
+			logger.Debug("Deleting subdirectory %s", entryPath)
+			if err := os.RemoveAll(entryPath); err != nil {
+				logger.Error("Failed to delete subdirectory %s: %v", entryPath, err)
+				return fmt.Errorf("failed to delete subdirectory %s: %w", entryPath, err)
+			}
+		} else {
+			logger.Debug("Deleting file %s", entryPath)
+			if err := os.Remove(entryPath); err != nil {
+				logger.Error("Failed to delete file %s: %v", entryPath, err)
+				return fmt.Errorf("failed to delete file %s: %w", entryPath, err)
+			}
+		}
+	}
+
+	logger.Debug("Successfully deleted directory contents of %s", directoryPath)
 	return nil
 }
