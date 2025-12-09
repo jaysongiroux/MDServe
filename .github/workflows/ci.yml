@@ -127,6 +127,7 @@ jobs:
   upload-directories:
     name: Upload Config & Asset Directories
     runs-on: ubuntu-latest
+    needs: [build-binaries-linux-windows, build-binaries-darwin]
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     steps:
       - name: Checkout code
@@ -186,7 +187,7 @@ jobs:
 
   build-and-push-image:
     name: Build and Push Docker Image
-    needs: [build-binaries-linux-windows, build-binaries-darwin]
+    needs: release
     runs-on: ubuntu-latest
     permissions:
       contents: read
