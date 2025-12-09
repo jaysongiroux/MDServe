@@ -127,7 +127,7 @@ func prelimSetup(callerName string) (*handler.App, error) {
 	}
 
 	// get all the assets that have been moved to the generated assets path
-	allAssets, err := assets.GetAssets(app.AssetsGeneratedPath)
+	allAssets, err := files.GetAllFilesInDirectory(app.AssetsGeneratedPath)
 	if err != nil {
 		appLogger.Fatal("Failed to get all assets: %v", err)
 	}
@@ -138,8 +138,21 @@ func prelimSetup(callerName string) (*handler.App, error) {
 		appLogger.Fatal("Failed to get optimizable assets: %v", err)
 	}
 
+	siteManifestIconPaths, err := assets.GetIconPathsFromSiteWebmanifest(filepath.Join(app.ServerConfig.AssetsPath, "site.webmanifest"))
+	if err != nil {
+		appLogger.Fatal("Failed to get site manifest icon paths: %v", err)
+	}
+
+	logger.Debug("Site manifest icon paths: %v", siteManifestIconPaths)
+
 	// optimize all assets that can be optimized
 	for _, asset := range optimizableAssets {
+		// filter out the assets related to the site.webmanifest
+		logger.Info("Checking asset: %s", asset)
+		if assets.ShouldSkipAsset(asset, siteManifestIconPaths) {
+			logger.Info("Skipping asset: %s because it is a site manifest icon, favicon, SVG, or a format that is not supported for optimization", asset)
+			continue
+		}
 		err = assets.ConvertToWebP(asset, app.ServerConfig.OptimizeImages, app.ServerConfig.OptimizeImagesQuality)
 		if err != nil {
 			appLogger.Fatal("Failed to convert asset to WebP: %v", err)
@@ -149,6 +162,7 @@ func prelimSetup(callerName string) (*handler.App, error) {
 			appLogger.Fatal("Failed to delete asset: %v", err)
 		}
 	}
+
 	logger.Info("Assets optimized successfully")
 
 	// move all user-static assets to the generated path

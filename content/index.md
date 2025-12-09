@@ -5,6 +5,8 @@
 	 -->
 # MDServe
 
+![MDServe product hero image](../assets/logo.jpg)
+
 **MDServe** is a high-performance, flat-file content server built with Go.
 
 MDServe transforms a folder of Markdown files into a dynamic website. Unlike traditional Static Site Generators (SSGs), MDServe is a live HTTP server that can compile content on-demand or serve pre-compiled HTML from memory. Built using Go's standard library `html/template` package, it supports advanced features like custom layouts, pagination, tag filtering, and metadata-driven content organization.

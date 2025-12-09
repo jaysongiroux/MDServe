@@ -1,6 +1,7 @@
 package assets
 
 import (
+	"encoding/json"
 	"image"
 	_ "image/gif"  // Register GIF decoder
 	_ "image/jpeg" // Register JPEG decoder
@@ -8,10 +9,18 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/chai2010/webp"
 	"github.com/jaysongiroux/mdserve/internal/logger"
+)
+
+var (
+	NonOptimizableImageRegexes = []*regexp.Regexp{
+		regexp.MustCompile(`apple-touch-icon.[A-z]*`),
+		regexp.MustCompile(`favicon-[0-9]*[A-z][0-9]*.[A-z]*`),
+	}
 )
 
 // convertToWebP reads an image and saves a .webp version next to it
@@ -54,4 +63,68 @@ func ConvertToWebP(path string, optimize bool, quality int) error {
 
 	logger.Info("Generated WebP: %s", webpPath)
 	return nil
+}
+
+type SiteWebmanifest struct {
+	Icons []Icon `json:"icons"`
+}
+
+type Icon struct {
+	Src string `json:"src"`
+}
+
+func GetIconPathsFromSiteWebmanifest(path string) ([]string, error) {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return nil, err
+	}
+
+	webmanifest, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	var siteWebmanifest SiteWebmanifest
+	err = json.Unmarshal(webmanifest, &siteWebmanifest)
+	if err != nil {
+		return nil, err
+	}
+
+	var iconPaths []string
+	for _, icon := range siteWebmanifest.Icons {
+		// remove any leading slash from the icon path
+		icon.Src = strings.TrimPrefix(icon.Src, "/")
+		// remove any trailing slash from the icon path
+		icon.Src = strings.TrimSuffix(icon.Src, "/")
+		iconPaths = append(iconPaths, icon.Src)
+	}
+
+	return iconPaths, nil
+}
+
+func ShouldSkipAsset(asset string, siteManifestIconPaths []string) bool {
+	// if any of the site manifest icon paths are a suffix of the asset path, return true
+	for _, iconPath := range siteManifestIconPaths {
+		if strings.HasSuffix(asset, iconPath) {
+			return true
+		}
+	}
+
+	// skip assets that end in .ico
+	if strings.HasSuffix(asset, ".ico") {
+		return true
+	}
+
+	// skip assets that svg
+	if strings.HasSuffix(asset, ".svg") {
+		return true
+	}
+
+	// skip assets that match any of the non-optimizable image regexes
+	for _, regex := range NonOptimizableImageRegexes {
+		if regex.MatchString(asset) {
+			return true
+		}
+	}
+
+	return false
 }

@@ -349,3 +349,8 @@ To stop the container:
 ```bash
 docker-compose down
 ```
+
+## Wishlist
+- [ ] CORS
+- [ ] Caching
+- [ ] private remote repos

@@ -8,7 +8,7 @@ host: 127.0.0.1
 # HTML Compilation Settings
 # static - MD files are compiled into a HTML files when the service starts. More performant but less flexible.
 # live - MD files are loaded when requested. Less performant but more flexible.
-html_compilation_mode: static
+html_compilation_mode: live
 
 # Define the locations of the various user-defined directories
 content_path: content
@@ -20,7 +20,7 @@ templates_path: templates
 # null means local content path
 # otherwise, the content will be fetched from the remote path
 # url only supports git urls (e.g. https://github.com/jaysongiroux/mdserve.git)
-git_remote_content_path: https://github.com/jaysongiroux/MDServe.git
+git_remote_content_path: null
 # the directory in the remote path to fetch the content
 # if the remote url is provided, this must be a subdirectory of the remote path
 # ex. content/md_files

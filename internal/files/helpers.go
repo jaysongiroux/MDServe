@@ -33,6 +33,29 @@ func CheckIfDirectoryExists(path string) (bool, error) {
 	return true, nil
 }
 
+func GetAllFilesInDirectory(path string) ([]string, error) {
+	var filePaths []string
+
+	err := filepath.Walk(path, func(filePath string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// Only add files, not directories
+		if !info.IsDir() {
+			filePaths = append(filePaths, filePath)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return filePaths, nil
+}
+
 func RecursivelyCopyDirectory(sourcePath string, destinationPath string) error {
 	// Get source info to preserve permissions
 	sourceInfo, err := os.Stat(sourcePath)
