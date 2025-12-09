@@ -1,0 +1,3 @@
+/*
+Base JavaScript for MDServe
+*/
