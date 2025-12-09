@@ -31,18 +31,20 @@ jobs:
 
 
 
-  build-binaries:
-    name: Build Binaries
+  build-binaries-linux-windows:
+    name: Build Linux & Windows Binaries
     # needs: test
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     strategy:
       matrix:
-        goos: [linux, windows, darwin]
-        goarch: [amd64, arm64]
-        exclude:
-          - goos: windows
+        include:
+          - goos: linux
+            goarch: amd64
+          - goos: linux
             goarch: arm64
+          - goos: windows
+            goarch: amd64
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -65,28 +67,20 @@ jobs:
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 1
         run: |
           BINARY_NAME=mdserve-${{ matrix.goos }}-${{ matrix.goarch }}
           if [ "${{ matrix.goos }}" = "windows" ]; then
             BINARY_NAME+=".exe"
           fi
           
-          # Configure CGO based on target platform
-          if [ "${{ matrix.goos }}" = "linux" ]; then
-            export CGO_ENABLED=1
-            if [ "${{ matrix.goarch }}" = "arm64" ]; then
-              export CC=aarch64-linux-gnu-gcc
-            else
-              export CC=gcc
-            fi
+          # Configure C compiler based on target platform
+          if [ "${{ matrix.goos }}" = "linux" ] && [ "${{ matrix.goarch }}" = "arm64" ]; then
+            export CC=aarch64-linux-gnu-gcc
           elif [ "${{ matrix.goos }}" = "windows" ]; then
-            export CGO_ENABLED=1
-            if [ "${{ matrix.goarch }}" = "amd64" ]; then
-              export CC=x86_64-w64-mingw32-gcc
-            fi
+            export CC=x86_64-w64-mingw32-gcc
           else
-            # Darwin - CGO cross-compilation from Linux is complex, disable it
-            export CGO_ENABLED=0
+            export CC=gcc
           fi
           
           go build -o $BINARY_NAME main.go
@@ -96,6 +90,47 @@ jobs:
         with:
           name: mdserve-${{ matrix.goos }}-${{ matrix.goarch }}
           path: mdserve-*
+
+  build-binaries-darwin:
+    name: Build macOS Binaries
+    # needs: test
+    runs-on: macos-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    strategy:
+      matrix:
+        goarch: [amd64, arm64]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.4'
+
+      - name: Build
+        env:
+          GOOS: darwin
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 1
+        run: |
+          BINARY_NAME=mdserve-darwin-${{ matrix.goarch }}
+          go build -o $BINARY_NAME main.go
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mdserve-darwin-${{ matrix.goarch }}
+          path: mdserve-*
+
+
+  upload-directories:
+    name: Upload Config & Asset Directories
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
        
       - name: Upload config directory
         uses: actions/upload-artifact@v4
@@ -126,11 +161,10 @@ jobs:
         with:
           name: content
           path: content
-      
 
   release:
     name: Create Release
-    needs: build-binaries
+    needs: [build-binaries-linux-windows, build-binaries-darwin, upload-directories]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     permissions:
@@ -152,7 +186,7 @@ jobs:
 
   build-and-push-image:
     name: Build and Push Docker Image
-    needs: build-binaries
+    needs: [build-binaries-linux-windows, build-binaries-darwin]
     runs-on: ubuntu-latest
     permissions:
       contents: read
