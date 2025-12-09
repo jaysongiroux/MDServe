@@ -1,6 +1,6 @@
 <!-- 
 {
-"tags": ["example"]
+    "tags": ["example"]
 }
 -->
 # 📘 Introduction to Markdown
@@ -147,11 +147,3 @@ graph TD;
 Markdown is extremely easy to learn but powerful enough for documentation, articles, and entire websites. You write your content once—tools convert it anywhere.
 
 Happy writing!
-
----
-
-If you'd like, I can generate more:
-
-* a Markdown file with advanced features
-* a “Markdown cheat sheet”
-* a Markdown tutorial with code samples specific to your tech stack (Next.js, Go templates, etc.)

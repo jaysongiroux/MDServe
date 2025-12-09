@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/jaysongiroux/mdserve/internal/logger"
 )
 
 type Metadata struct {
@@ -39,6 +41,8 @@ func GetMetadata(markdownContent string) (*Metadata, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse metadata: %w", err)
 	}
+
+	logger.Debug("Metadata: %+v", metadata)
 
 	return &Metadata{
 		Tags:                 metadata.Tags,

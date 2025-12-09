@@ -14,6 +14,7 @@ import (
 	chromahtml "github.com/alecthomas/chroma/v2/formatters/html"
 	"github.com/jaysongiroux/mdserve/internal/config"
 	"github.com/jaysongiroux/mdserve/internal/constants"
+	"github.com/jaysongiroux/mdserve/internal/logger"
 	"github.com/yuin/goldmark"
 	highlighting "github.com/yuin/goldmark-highlighting/v2"
 	"github.com/yuin/goldmark/extension"
@@ -166,6 +167,21 @@ func GetFirstParagraph(HTMLContent string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	paragraph := doc.Find("p").First()
-	return paragraph.Text(), nil
+
+	var firstNonEmptyParagraph string
+	doc.Find("p").EachWithBreak(func(i int, s *goquery.Selection) bool {
+		text := strings.TrimSpace(s.Text())
+		if text != "" {
+			firstNonEmptyParagraph = text
+			return false
+		}
+		return true
+	})
+
+	if firstNonEmptyParagraph == "" {
+		logger.Debug("No non-empty paragraph found in HTML content")
+		return "", nil
+	}
+
+	return firstNonEmptyParagraph, nil
 }

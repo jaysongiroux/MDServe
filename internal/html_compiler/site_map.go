@@ -23,13 +23,11 @@ func SortSiteMap(siteMap []SiteMapEntry, sortDirection config.SortDirection) (*[
 	sortFunc := func(i, j int) bool {
 		var iDate, jDate time.Time
 
-		if siteMap[i].Metadata != nil {
-			iDate = siteMap[i].Metadata.CreationDate
-		}
-		if siteMap[j].Metadata != nil {
-			jDate = siteMap[j].Metadata.CreationDate
-		}
+		// setting the dates for sorting
+		iDate = GetCreationDate(siteMap[i])
+		jDate = GetCreationDate(siteMap[j])
 
+		// Sorting
 		if !iDate.IsZero() && !jDate.IsZero() {
 			return iDate.Before(jDate)
 		}

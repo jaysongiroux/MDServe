@@ -8,7 +8,7 @@ host: 127.0.0.1
 # HTML Compilation Settings
 # static - MD files are compiled into a HTML files when the service starts. More performant but less flexible.
 # live - MD files are loaded when requested. Less performant but more flexible.
-html_compilation_mode: live
+html_compilation_mode: static
 
 # Define the locations of the various user-defined directories
 content_path: content
