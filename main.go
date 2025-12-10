@@ -65,7 +65,7 @@ func prelimSetup(callerName string) (*handler.App, error) {
 		err = logger.Sync()
 		if err != nil {
 			// Ignore errors from syncing stdout/stderr in non-TTY environments (Docker, pipes, etc.)
-			if errors.Is(err, syscall.ENOTTY) || errors.Is(err, syscall.EINVAL) {
+			if errors.Is(err, syscall.ENOTTY) || errors.Is(err, syscall.EINVAL) || errors.Is(err, os.ErrInvalid) {
 				return
 			}
 			appLogger.Fatal("Failed to sync logger: %v", err)
