@@ -77,7 +77,9 @@ func (c *ServerConfig) validateMutuallyExclusiveOptions() error {
 	}
 
 	if c.Demo {
-		logger.Warn("Demo mode is enabled. This will copy the README to the content folder as index.md")
+		logger.Warn(
+			"Demo mode is enabled. This will copy the README to the content folder as index.md",
+		)
 	}
 
 	return nil
@@ -87,7 +89,9 @@ func (c *ServerConfig) validateMutuallyExclusiveOptions() error {
 func (c *ServerConfig) validateGitRemoteFields() error {
 	// Branch is always required
 	if c.GitRemoteContentBranch == "" {
-		err := fmt.Errorf("git_remote_content_branch is required when git remote content URL is provided")
+		err := fmt.Errorf(
+			"git_remote_content_branch is required when git remote content URL is provided",
+		)
 		logger.Error(err.Error())
 		return err
 	}
@@ -98,7 +102,9 @@ func (c *ServerConfig) validateGitRemoteFields() error {
 		c.GitRemoteContentUserStaticDirectory != ""
 
 	if !hasAtLeastOneDirectory {
-		err := fmt.Errorf("at least one directory must be configured (git_remote_content_directory, git_remote_content_assets_directory, or git_remote_content_user_static_directory) when git remote content URL is provided")
+		err := fmt.Errorf(
+			"at least one directory must be configured (git_remote_content_directory, git_remote_content_assets_directory, or git_remote_content_user_static_directory) when git remote content URL is provided",
+		)
 		logger.Error(err.Error())
 		return err
 	}

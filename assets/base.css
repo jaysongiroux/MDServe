@@ -2,8 +2,6 @@
    Base Reset
 --------------------------------------------------- */
 * {
-  margin: 0;
-  padding: 0;
   box-sizing: border-box;
 }
 
@@ -33,12 +31,19 @@ body {
   -webkit-backdrop-filter: blur(10px);
 }
 
+.menu-list {
+  list-style: none;
+  padding-left: 0;
+  margin-left: 0;
+}
+
 /* ---------------------------------------------------
      Main Content
   --------------------------------------------------- */
 img {
   width: 100%;
   height: auto;
+  border-radius: 4px;
 }
 
 .page-content h1 {
@@ -85,7 +90,6 @@ img {
   font-style: italic;
 }
 
-
 .page-content table {
   width: 100%;
   border-collapse: collapse;
@@ -109,11 +113,7 @@ img {
   --------------------------------------------------- */
 .glass-footer {
   margin-top: 3rem;
-  background: linear-gradient(
-    to bottom,
-    rgba(255, 255, 255, 0.6),
-    rgba(250, 250, 250, 0.8)
-  );
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.6), rgba(250, 250, 250, 0.8));
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border-top: 1px solid rgba(229, 229, 229, 0.5);

@@ -1,8 +1,11 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
+
+	"github.com/jaysongiroux/mdserve/internal/logger"
 )
 
 type PageError struct {
@@ -24,7 +27,8 @@ func NewPageError(code, title, message string) *PageError {
 }
 
 func handleError(app *App, w http.ResponseWriter, err error, data *TemplateData) {
-	if pageErr, ok := err.(*PageError); ok {
+	pageErr := &PageError{}
+	if errors.As(err, &pageErr) {
 		data.ErrorCode = &pageErr.Code
 		data.ErrorTitle = &pageErr.Title
 		data.ErrorMessage = &pageErr.Message
@@ -33,5 +37,8 @@ func handleError(app *App, w http.ResponseWriter, err error, data *TemplateData)
 		data.ErrorTitle = &Err500Title
 		data.ErrorMessage = &Err500Message
 	}
-	app.Templates.ExecuteTemplate(w, "error.html", data)
+	err = app.Templates.ExecuteTemplate(w, "error.html", data)
+	if err != nil {
+		logger.Error("Failed to execute template: %v", err)
+	}
 }

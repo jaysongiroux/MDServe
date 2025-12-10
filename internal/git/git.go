@@ -8,38 +8,28 @@ import (
 
 	"github.com/go-git/go-git/v6"
 	"github.com/go-git/go-git/v6/plumbing"
-	"github.com/go-git/go-git/v6/plumbing/transport/http"
+	"github.com/jaysongiroux/mdserve/internal/auth"
 	"github.com/jaysongiroux/mdserve/internal/config"
+	"github.com/jaysongiroux/mdserve/internal/constants"
 	"github.com/jaysongiroux/mdserve/internal/files"
 	"github.com/jaysongiroux/mdserve/internal/logger"
 )
 
+// Errors
 const (
-	GitRemoteContentDirectory = ".git-remote-content"
-)
-
-var (
 	ErrAlreadyUpToDate = "already up-to-date"
 )
-
-func buildGitAuthOptions() *http.BasicAuth {
-	if os.Getenv("GIT_USERNAME") != "" && os.Getenv("GIT_PASSWORD") != "" {
-		return &http.BasicAuth{
-			Username: os.Getenv("GIT_USERNAME"),
-			Password: os.Getenv("GIT_PASSWORD"),
-		}
-	}
-	return nil
-}
 
 func fetchGitRemoteContent(url string, destinationPath string, branch string) error {
 	// clone the remote repository to the destination path
 	logger.Debug("Cloning git remote content from %s to %s", url, destinationPath)
+	username := os.Getenv(config.ENV_VAR_GIT_USERNAME)
+	password := os.Getenv(config.ENV_VAR_GIT_PASSWORD)
 	repo, err := git.PlainClone(destinationPath, &git.CloneOptions{
 		URL:          url,
 		Depth:        1,
 		SingleBranch: true,
-		Auth:         buildGitAuthOptions(),
+		Auth:         auth.CreateGitBasicAuth(&username, &password),
 	})
 
 	if err != nil {
@@ -91,17 +81,20 @@ func openGitRepository(directory string) (*git.Repository, error) {
 
 func createGitRemoteContentDirectory() (string, error) {
 	// create a directory to clone the git remote content to if it doesnt exist
-	logger.Debug("Creating git remote content directory at %s", GitRemoteContentDirectory)
-	err := os.MkdirAll(GitRemoteContentDirectory, 0755)
+	logger.Debug("Creating git remote content directory at %s", constants.GitRemoteContentDirectory)
+	err := os.MkdirAll(constants.GitRemoteContentDirectory, 0750)
 	if err != nil {
 		return "", err
 	}
 
-	logger.Debug("Successfully created git remote content directory at %s", GitRemoteContentDirectory)
-	return GitRemoteContentDirectory, nil
+	logger.Debug("Successfully created git remote content directory at %s", constants.GitRemoteContentDirectory)
+	return constants.GitRemoteContentDirectory, nil
 }
 
 func pullLatestGitRemoteContent(branch string, directory string) error {
+	username := os.Getenv(config.ENV_VAR_GIT_USERNAME)
+	password := os.Getenv(config.ENV_VAR_GIT_PASSWORD)
+
 	// open the repository
 	repo, err := openGitRepository(directory)
 	if err != nil {
@@ -121,7 +114,7 @@ func pullLatestGitRemoteContent(branch string, directory string) error {
 		RemoteName:    "origin",
 		ReferenceName: branchRefName,
 		Force:         true,
-		Auth:          buildGitAuthOptions(),
+		Auth:          auth.CreateGitBasicAuth(&username, &password),
 	})
 
 	if err != nil {
@@ -139,7 +132,7 @@ func pullLatestGitRemoteContent(branch string, directory string) error {
 }
 
 func isGitRemoteContentDirectoryAGitRepository() (bool, error) {
-	_, err := openGitRepository(GitRemoteContentDirectory)
+	_, err := openGitRepository(constants.GitRemoteContentDirectory)
 	if err != nil {
 		return false, nil
 	}
@@ -162,7 +155,7 @@ func copyRemoteContentToLocalContent(remoteDirectory string, localDirectory stri
 
 	// copy the contents from the remote directory to the local directory
 	logger.Debug("Copying contents from remote directory %s to local directory %s", remoteDirectory, localDirectory)
-	completeRemoteDirectory := filepath.Join(GitRemoteContentDirectory, remoteDirectory)
+	completeRemoteDirectory := filepath.Join(constants.GitRemoteContentDirectory, remoteDirectory)
 	err = files.RecursivelyCopyDirectory(completeRemoteDirectory, localDirectory)
 	if err != nil {
 		logger.Error("Failed to copy contents from remote directory %s to local directory %s: %v", remoteDirectory, localDirectory, err)
@@ -180,7 +173,7 @@ func HandleGitRemoteContent(serverConfig *config.ServerConfig) error {
 		return nil
 	}
 
-	exists, err := files.CheckIfDirectoryExists(GitRemoteContentDirectory)
+	exists, err := files.CheckIfDirectoryExists(constants.GitRemoteContentDirectory)
 	if err != nil {
 		logger.Error("Failed to check if git remote content directory exists: %v", err)
 		return err
@@ -196,7 +189,7 @@ func HandleGitRemoteContent(serverConfig *config.ServerConfig) error {
 		}
 	} else {
 		logger.Debug("Git remote content directory exists, using it")
-		directory = GitRemoteContentDirectory
+		directory = constants.GitRemoteContentDirectory
 	}
 
 	// pull down or clone the remote content
@@ -282,7 +275,7 @@ func syncDirectory(remotePath, localPath, name string) error {
 	logger.Debug("Successfully deleted the contents of the local directory %s", localPath)
 
 	// Create local directory
-	if err := os.MkdirAll(localPath, 0755); err != nil {
+	if err := os.MkdirAll(localPath, 0750); err != nil {
 		return fmt.Errorf("failed to create directory %s: %w", localPath, err)
 	}
 	logger.Debug("Successfully created the local %s directory at %s", name, localPath)

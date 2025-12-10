@@ -15,7 +15,10 @@ func GetOptimizableAssets(paths []string) ([]string, error) {
 	var optimizableAssets []string
 	for _, path := range paths {
 		// We skip files that are already WebP
-		if slices.Contains(constants.OptimizableImageExtensions, strings.ToLower(filepath.Ext(path))) {
+		if slices.Contains(
+			constants.OptimizableImageExtensions,
+			strings.ToLower(filepath.Ext(path)),
+		) {
 			optimizableAssets = append(optimizableAssets, path)
 		}
 	}

@@ -9,6 +9,7 @@ import (
 
 	"github.com/jaysongiroux/mdserve/internal/constants"
 	"github.com/jaysongiroux/mdserve/internal/handler"
+	"github.com/jaysongiroux/mdserve/internal/logger"
 )
 
 func FetchReadme() (*string, error) {
@@ -16,7 +17,12 @@ func FetchReadme() (*string, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer response.Body.Close()
+	defer func() {
+		err := response.Body.Close()
+		if err != nil {
+			logger.Error("Failed to close response body: %v", err)
+		}
+	}()
 
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
@@ -67,7 +73,7 @@ func HandleDemoEnabled(app *handler.App) error {
 	readmeString = comment + "\n" + readmeString
 
 	// write the fetched README to the content folder as index.md
-	err = os.WriteFile(readmePath, []byte(readmeString), 0644)
+	err = os.WriteFile(readmePath, []byte(readmeString), 0600)
 	if err != nil {
 		return err
 	}

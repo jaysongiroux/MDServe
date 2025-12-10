@@ -2,9 +2,7 @@
   <div class="p-4 flex max-w-screen-xl justify-between w-full mx-auto">
     <!-- brand -->
     <a href="/" class="flex items-center gap-3">
-      <span class="text-neutral-800 text-lg font-semibold"
-        >{{ .Site.Name }}</span
-      >
+      <span class="text-neutral-800 text-lg font-semibold">{{ .Site.Name }}</span>
     </a>
 
     <!-- hamburger (mobile) -->
@@ -16,31 +14,18 @@
     >
       <span class="sr-only">Open main menu</span>
       <!-- hamburger icon -->
-      <svg
-        class="w-6 h-6"
-        aria-hidden="true"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M4 6h16M4 12h16M4 18h16"
-        />
+      <svg class="w-6 h-6" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
       </svg>
     </button>
 
     <!-- desktop menu -->
     <div class="hidden md:block md:w-auto">
-      <ul class="flex items-center gap-6 text-sm text-neutral-700">
+      <ul class="flex list-none items-center gap-6 text-sm text-neutral-700 menu-list">
         {{ range .Navbar }} {{if .Dropdown}}
-        <li class="relative group">
+        <li class="relative group list-none">
           <!-- the wrapper is a flex row so caret can be aligned if needed -->
-          <div
-            class="inline-flex items-center gap-2 px-3 py-2 rounded hover:bg-neutral-100 cursor-pointer"
-          >
+          <div class="inline-flex items-center gap-2 px-3 py-2 rounded hover:bg-neutral-100 cursor-pointer">
             <div>{{.Label}}</div>
             <!-- caret (decorative for desktop) -->
             <svg
@@ -59,27 +44,15 @@
           </div>
 
           <!-- dropdown menu (desktop). last:md:right-0 flips the menu for the last item to avoid overflow -->
-          <div
-            class="hidden group-hover:block absolute top-full min-w-[16rem] z-30 last:md:right-0 last:md:left-auto"
-          >
-            <div
-              class="glass-dropdown text-neutral-900 border border-neutral-200 rounded-md shadow-lg mt-2"
-            >
-              <ul>
-                <li>
-                  <a
-                    href="{{.URL}}"
-                    class="block px-4 py-2 hover:bg-white/50 rounded"
-                    >{{.Label}}</a
-                  >
+          <div class="hidden group-hover:block absolute top-full min-w-[16rem] z-30 last:md:right-0 last:md:left-auto">
+            <div class="glass-dropdown text-neutral-900 border border-neutral-200 rounded-md shadow-lg mt-2">
+              <ul class="list-none menu-list">
+                <li class="list-none">
+                  <a href="{{.URL}}" class="block px-4 py-2 hover:bg-white/50 rounded">{{.Label}}</a>
                 </li>
                 {{ range .Dropdown }}
-                <li>
-                  <a
-                    href="{{.URL}}"
-                    class="block px-4 py-2 hover:bg-white/50 rounded"
-                    >{{.Label}}</a
-                  >
+                <li class="list-none">
+                  <a href="{{.URL}}" class="block px-4 py-2 hover:bg-white/50 rounded">{{.Label}}</a>
                 </li>
                 {{end }}
               </ul>
@@ -88,12 +61,8 @@
         </li>
 
         {{ else }}
-        <li>
-          <a
-            href="{{.URL}}"
-            class="px-3 py-2 rounded text-neutral-700 hover:bg-neutral-100"
-            >{{.Label}}</a
-          >
+        <li class="list-none">
+          <a href="{{.URL}}" class="px-3 py-2 rounded text-neutral-700 hover:bg-neutral-100">{{.Label}}</a>
         </li>
         {{end}} {{end }}
       </ul>
@@ -108,56 +77,32 @@
   aria-hidden="true"
   style="max-width: 80vw"
 >
-  <div
-    class="p-4 border-b border-neutral-200 flex items-center justify-between"
-  >
+  <div class="p-4 border-b border-neutral-200 flex items-center justify-between">
     <div class="flex items-center gap-3">
       <span class="font-semibold">{{ .Site.Name }}</span>
     </div>
-    <button
-      id="mobileClose"
-      class="p-2 rounded-md hover:bg-neutral-100 focus:outline-none"
-    >
+    <button id="mobileClose" class="p-2 rounded-md hover:bg-neutral-100 focus:outline-none">
       <span class="sr-only">Close menu</span>
-      <svg
-        class="w-5 h-5"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M6 18L18 6M6 6l12 12"
-        />
+      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
       </svg>
     </button>
   </div>
 
   <nav class="p-4">
-    <ul class="space-y-1 text-neutral-800">
+    <ul class="space-y-1 text-neutral-800 menu-list list-none">
       {{ range .Navbar }} {{if .Dropdown}}
 
-      <li class="border-t border-neutral-100 pt-3">
+      <li class="border-t border-neutral-100 pt-3 list-none">
         <div class="flex items-center justify-between">
-          <a
-            href="{{.URL}}"
-            class="text-neutral-800 px-3 py-2 flex-1 hover:bg-neutral-100 rounded"
-            >{{.Label}}</a
-          >
+          <a href="{{.URL}}" class="text-neutral-800 px-3 py-2 flex-1 hover:bg-neutral-100 rounded">{{.Label}}</a>
           <!-- caret button toggles submenu; keyboard accessible -->
           <button
             class="caret-btn p-2 rounded-md hover:bg-neutral-100"
             aria-expanded="false"
             aria-controls="mobile-sub-1"
           >
-            <svg
-              class="w-4 h-4"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              aria-hidden="true"
-            >
+            <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
               <path
                 fill-rule="evenodd"
                 d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
@@ -168,24 +113,18 @@
         </div>
 
         <!-- mobile submenu (initially hidden) -->
-        <ul id="mobile-sub-1" class="mt-2 hidden pl-4 space-y-1 text-sm">
+        <ul id="mobile-sub-1" class="list-none mt-2 hidden pl-4 space-y-1 text-sm menu-list">
           {{ range .Dropdown }}
           <li>
-            <a
-              href="{{.URL}}"
-              class="block px-3 py-2 rounded hover:bg-neutral-50"
-              >{{.Label}}</a
-            >
+            <a href="{{.URL}}" class="block px-3 py-2 rounded hover:bg-neutral-50">{{.Label}}</a>
           </li>
           {{end }}
         </ul>
       </li>
       {{else }}
 
-      <li>
-        <a href="{{.URL}}" class="block px-3 py-2 hover:bg-neutral-100 rounded"
-          >{{.Label}}</a
-        >
+      <li class="list-none">
+        <a href="{{.URL}}" class="block px-3 py-2 hover:bg-neutral-100 rounded">{{.Label}}</a>
       </li>
       {{end}} {{end}}
     </ul>
@@ -193,10 +132,7 @@
 </div>
 
 <!-- overlay when mobile panel is open -->
-<div
-  id="mobileOverlay"
-  class="fixed inset-0 bg-neutral-900/20 hidden z-30"
-></div>
+<div id="mobileOverlay" class="fixed inset-0 bg-neutral-900/20 hidden z-30"></div>
 
 <script>
   (function () {
@@ -220,14 +156,12 @@
       mobileOverlay.classList.add("hidden");
       document.body.style.overflow = "";
       // also close any open mobile submenus
-      document
-        .querySelectorAll('#mobilePanel .caret-btn[aria-expanded="true"]')
-        .forEach((btn) => {
-          btn.setAttribute("aria-expanded", "false");
-          const id = btn.getAttribute("aria-controls");
-          const el = document.getElementById(id);
-          if (el) el.classList.add("hidden");
-        });
+      document.querySelectorAll('#mobilePanel .caret-btn[aria-expanded="true"]').forEach((btn) => {
+        btn.setAttribute("aria-expanded", "false");
+        const id = btn.getAttribute("aria-controls");
+        const el = document.getElementById(id);
+        if (el) el.classList.add("hidden");
+      });
     }
 
     hamburger?.addEventListener("click", (e) => {

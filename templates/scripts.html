@@ -11,7 +11,7 @@
 <!-- user js overrides -->
 <script src="{{ .UserStaticPath }}/custom.js"></script>
 
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tailwindplus/elements@1" type="module"></script>
+<script src="{{ .AssetsPath }}/tailwind.js"></script>
+<script src="{{ .AssetsPath }}/elements.js" type="module"></script>
 
 {{ template "base_meta.html" . }}

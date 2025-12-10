@@ -60,9 +60,18 @@ func RecursivelyCopyDirectory(sourcePath string, destinationPath string) error {
 	}
 
 	// Create destination directory with source permissions
-	logger.Debug("Creating destination directory %s with source permissions %v", destinationPath, sourceInfo.Mode())
+	logger.Debug(
+		"Creating destination directory %s with source permissions %v",
+		destinationPath,
+		sourceInfo.Mode(),
+	)
 	if err := os.MkdirAll(destinationPath, sourceInfo.Mode()); err != nil {
-		logger.Error("Failed to create destination directory %s with source permissions %v: %v", destinationPath, sourceInfo.Mode(), err)
+		logger.Error(
+			"Failed to create destination directory %s with source permissions %v: %v",
+			destinationPath,
+			sourceInfo.Mode(),
+			err,
+		)
 		return fmt.Errorf("failed to create destination directory: %w", err)
 	}
 
@@ -76,7 +85,12 @@ func RecursivelyCopyDirectory(sourcePath string, destinationPath string) error {
 		// Calculate relative path from source
 		relPath, err := filepath.Rel(sourcePath, path)
 		if err != nil {
-			logger.Error("Failed to get relative path from source path %s to path %s: %v", sourcePath, path, err)
+			logger.Error(
+				"Failed to get relative path from source path %s to path %s: %v",
+				sourcePath,
+				path,
+				err,
+			)
 			return fmt.Errorf("failed to get relative path: %w", err)
 		}
 
@@ -87,7 +101,12 @@ func RecursivelyCopyDirectory(sourcePath string, destinationPath string) error {
 		if info.IsDir() {
 			// Create directory with same permissions
 			if err := os.MkdirAll(destPath, info.Mode()); err != nil {
-				logger.Error("Failed to create directory %s with source permissions %v: %v", destPath, info.Mode(), err)
+				logger.Error(
+					"Failed to create directory %s with source permissions %v: %v",
+					destPath,
+					info.Mode(),
+					err,
+				)
 				return fmt.Errorf("failed to create directory %s: %w", destPath, err)
 			}
 			return nil
@@ -107,7 +126,10 @@ func CopyFile(sourcePath, destinationPath string, overwrite bool) error {
 
 	// Check if source is a directory
 	if sourceInfo.IsDir() {
-		return fmt.Errorf("source path is a directory, use RecursivelyCopyDirectory: %s", sourcePath)
+		return fmt.Errorf(
+			"source path is a directory, use RecursivelyCopyDirectory: %s",
+			sourcePath,
+		)
 	}
 
 	// Check if destination exists
@@ -125,23 +147,37 @@ func CopyFile(sourcePath, destinationPath string, overwrite bool) error {
 	}
 
 	// Ensure destination directory exists
-	if err := os.MkdirAll(filepath.Dir(destinationPath), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(destinationPath), 0750); err != nil {
 		return fmt.Errorf("failed to create destination directory: %w", err)
 	}
 
 	// Open source file
-	src, err := os.Open(sourcePath)
+	src, err := os.Open(filepath.Clean(sourcePath))
 	if err != nil {
 		return fmt.Errorf("failed to open source file: %w", err)
 	}
-	defer src.Close()
+	defer func() {
+		err := src.Close()
+		if err != nil {
+			logger.Error("Failed to close source file: %v", err)
+		}
+	}()
 
 	// Create destination file with source permissions
-	dst, err := os.OpenFile(destinationPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, sourceInfo.Mode())
+	dst, err := os.OpenFile(
+		filepath.Clean(destinationPath),
+		os.O_WRONLY|os.O_CREATE|os.O_TRUNC,
+		sourceInfo.Mode(),
+	)
 	if err != nil {
 		return fmt.Errorf("failed to create destination file: %w", err)
 	}
-	defer dst.Close()
+	defer func() {
+		err := dst.Close()
+		if err != nil {
+			logger.Error("Failed to close destination file: %v", err)
+		}
+	}()
 
 	// Perform the copy
 	if _, err := io.Copy(dst, src); err != nil {

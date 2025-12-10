@@ -12,29 +12,62 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  # test:
-  #   name: Run Tests
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
+  lint:
+    name: Lint and Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-  #     - name: Set up Go
-  #       uses: actions/setup-go@v5
-  #       with:
-  #         go-version: '1.23'
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: stable
 
-  #     - name: Get dependencies
-  #       run: go mod download
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
 
-  #     - name: Test
-  #       run: go test -v ./...
+      - name: Download dependencies
+        run: go mod download
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: v2.1
+
+      # - name: Run tests
+      #   run: go test -v -race -coverprofile=coverage.out ./...
+
+      # - name: Generate coverage report
+      #   run: |
+      #     grep -v "_test.go\|_mock.go\|testutils/" coverage.out > coverage_filtered.out || true
+      #     go tool cover -func=coverage_filtered.out -o=coverage.txt
+      #     COVERAGE=$(go tool cover -func=coverage_filtered.out | grep total | awk '{print $3}')
+      #     echo "Total Coverage: $COVERAGE" >> $GITHUB_STEP_SUMMARY
+      #     echo "## Test Coverage Report" >> $GITHUB_STEP_SUMMARY
+      #     echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+      #     cat coverage.txt >> $GITHUB_STEP_SUMMARY
+      #     echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+      #     echo "**Total Coverage: $COVERAGE**" >> $GITHUB_STEP_SUMMARY
+
+      # - name: Upload coverage artifact
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: coverage-report
+      #     path: |
+      #       coverage_filtered.out
+      #       coverage.txt
 
 
 
   build-binaries-linux-windows:
     name: Build Linux & Windows Binaries
-    # needs: test
+    needs: lint
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     strategy:

@@ -55,26 +55,26 @@ func HandleSitemap(app *App) http.HandlerFunc {
 
 			// Construct full URL
 			loc := baseURL + path
-            
-            // Handle root path empty check or similar if needed, but usually path is like "about" or "blog/..."
-            // If path is "index", it might be root. Logic in htmlcompiler usually handles index.
-            // Let's assume entry.Path is correct relative path.
+
+			// Handle root path empty check or similar if needed, but usually path is like "about" or "blog/..."
+			// If path is "index", it might be root. Logic in htmlcompiler usually handles index.
+			// Let's assume entry.Path is correct relative path.
 
 			lastMod := entry.LastModifiedDate.Format(time.RFC3339)
-            if entry.LastModifiedDate.IsZero() {
-                lastMod = entry.CreationDate.Format(time.RFC3339)
-            }
-            if lastMod == "0001-01-01T00:00:00Z" {
-                 // Fallback to now if totally missing? Or skip?
-                 // Let's use current time or omit? Required field usually.
-                 lastMod = time.Now().Format(time.RFC3339)
-            }
+			if entry.LastModifiedDate.IsZero() {
+				lastMod = entry.CreationDate.Format(time.RFC3339)
+			}
+			if lastMod == "0001-01-01T00:00:00Z" {
+				// Fallback to now if totally missing? Or skip?
+				// Let's use current time or omit? Required field usually.
+				lastMod = time.Now().Format(time.RFC3339)
+			}
 
 			urls = append(urls, URLXML{
 				Loc:     loc,
 				LastMod: lastMod,
 				// ChangeFreq and Priority could be inferred or hardcoded
-				ChangeFreq: "weekly", 
+				ChangeFreq: "weekly",
 				Priority:   "0.5",
 			})
 		}
@@ -86,8 +86,8 @@ func HandleSitemap(app *App) http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "application/xml")
 		// Cache control is handled by middleware, but we can ensure it here too or let middleware handle it.
-        // Middleware checks extension .xml so it should be fine.
-        
+		// Middleware checks extension .xml so it should be fine.
+
 		encoder := xml.NewEncoder(w)
 		encoder.Indent("", "  ")
 		if err := encoder.Encode(sitemap); err != nil {
@@ -96,4 +96,3 @@ func HandleSitemap(app *App) http.HandlerFunc {
 		}
 	}
 }
-

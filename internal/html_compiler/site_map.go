@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
@@ -15,7 +16,10 @@ import (
 	"github.com/jaysongiroux/mdserve/internal/logger"
 )
 
-func SortSiteMap(siteMap []SiteMapEntry, sortDirection config.SortDirection) (*[]SiteMapEntry, error) {
+func SortSiteMap(
+	siteMap []SiteMapEntry,
+	sortDirection config.SortDirection,
+) (*[]SiteMapEntry, error) {
 	if len(siteMap) == 0 {
 		logger.Debug("Site map is empty, returning empty site map")
 		return &siteMap, nil
@@ -59,7 +63,10 @@ func SortSiteMap(siteMap []SiteMapEntry, sortDirection config.SortDirection) (*[
 	return &siteMap, nil
 }
 
-func GenerateSiteMap(markdownFilePath string, siteConfig *config.SiteConfig) (*[]SiteMapEntry, error) {
+func GenerateSiteMap(
+	markdownFilePath string,
+	siteConfig *config.SiteConfig,
+) (*[]SiteMapEntry, error) {
 	// crawl the markdown file path to get all mark down files
 	mdFiles, err := GetMDFiles(markdownFilePath)
 	if err != nil {
@@ -72,22 +79,22 @@ func GenerateSiteMap(markdownFilePath string, siteConfig *config.SiteConfig) (*[
 		// convert the markdown file to an HTML string
 		htmlContent, err := CompileHTMLFile(file, siteConfig)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compile HTML file %s: %v", file, err)
+			return nil, fmt.Errorf("failed to compile HTML file %s: %w", file, err)
 		}
 
 		firstHeader, err := GetFirstHeader("h1", htmlContent)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get first header for file %s: %v", file, err)
+			return nil, fmt.Errorf("failed to get first header for file %s: %w", file, err)
 		}
 
 		firstParagraph, err := GetFirstParagraph(htmlContent)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get first paragraph for file %s: %v", file, err)
+			return nil, fmt.Errorf("failed to get first paragraph for file %s: %w", file, err)
 		}
 
-		markdownContent, err := os.ReadFile(file)
+		markdownContent, err := os.ReadFile(filepath.Clean(file))
 		if err != nil {
-			return nil, fmt.Errorf("failed to read markdown content for file %s: %v", file, err)
+			return nil, fmt.Errorf("failed to read markdown content for file %s: %w", file, err)
 		}
 		metadata, err := GetMetadata(string(markdownContent))
 		if err != nil {
@@ -98,7 +105,7 @@ func GenerateSiteMap(markdownFilePath string, siteConfig *config.SiteConfig) (*[
 		var lastModifiedDate time.Time
 		fileModifiedDate, err := files.GetFileModifiedDate(file)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get modified date for file %s: %v", file, err)
+			return nil, fmt.Errorf("failed to get modified date for file %s: %w", file, err)
 		}
 		// handle if the modification date is not set in the metadata
 		if metadata != nil {
@@ -148,7 +155,7 @@ func GenerateSiteMap(markdownFilePath string, siteConfig *config.SiteConfig) (*[
 		sortedSiteMap, err := SortSiteMap(siteMap, siteConfig.Site.SortDirection)
 		if err != nil {
 			logger.Error("Failed to sort site map: %v", err)
-			return nil, fmt.Errorf("failed to sort site map: %v", err)
+			return nil, fmt.Errorf("failed to sort site map: %w", err)
 		}
 
 		logger.Debug("Successfully sorted site map")
@@ -165,22 +172,22 @@ func SaveSiteMap(siteMap *[]SiteMapEntry, filePath string) error {
 		return err
 	}
 	// with indentation
-	err = os.WriteFile(filePath, jsonContent, 0644)
+	err = os.WriteFile(filePath, jsonContent, 0600)
 	if err != nil {
-		return fmt.Errorf("failed to save site map to %s: %v", filePath, err)
+		return fmt.Errorf("failed to save site map to %s: %w", filePath, err)
 	}
 	return nil
 }
 
 func LoadSiteMap(filePath string) (*[]SiteMapEntry, error) {
-	jsonContent, err := os.ReadFile(filePath)
+	jsonContent, err := os.ReadFile(filepath.Clean(filePath))
 	if err != nil {
 		return nil, err
 	}
 	var siteMap []SiteMapEntry
 	err = json.Unmarshal(jsonContent, &siteMap)
 	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal site map from %s: %v", filePath, err)
+		return nil, fmt.Errorf("failed to unmarshal site map from %s: %w", filePath, err)
 	}
 
 	return &siteMap, nil
@@ -189,7 +196,7 @@ func LoadSiteMap(filePath string) (*[]SiteMapEntry, error) {
 func FilterSiteMap(siteMap *[]SiteMapEntry, regex string) (*[]SiteMapEntry, error) {
 	regexObj, err := regexp.Compile(regex)
 	if err != nil {
-		return nil, fmt.Errorf("failed to compile regex: %v", err)
+		return nil, fmt.Errorf("failed to compile regex: %w", err)
 	}
 	filteredSiteMap := make([]SiteMapEntry, 0)
 	for _, article := range *siteMap {

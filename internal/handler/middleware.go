@@ -29,15 +29,19 @@ func AddCacheHeaders(app *App, next http.Handler) http.Handler {
 		path := r.URL.Path
 
 		// Check if it's a static asset
-		isStatic := strings.HasPrefix(path, "/assets/") || strings.HasPrefix(path, "/user-static/") || strings.HasSuffix(path, ".xml") || strings.HasSuffix(path, ".txt")
+		isStatic := strings.HasPrefix(path, "/assets/") ||
+			strings.HasPrefix(path, "/user-static/") ||
+			strings.HasSuffix(path, ".xml") ||
+			strings.HasSuffix(path, ".txt")
 
 		if isStatic {
 			cacheDuration := time.Duration(app.ServerConfig.CacheStaticMaxAge) * time.Second
-			w.Header().Set("Cache-Control", fmt.Sprintf("public, max-age=%d, immutable", int(cacheDuration.Seconds())))
+			w.Header().
+				Set("Cache-Control", fmt.Sprintf("public, max-age=%d, immutable", int(cacheDuration.Seconds())))
 		} else {
 			// Dynamic content (HTML)
 			w.Header().Set("Content-Type", "text/html")
-			
+
 			var cacheDuration time.Duration
 			if app.ServerConfig.HTMLCompilationMode == constants.HTMLCompilationModeLive {
 				cacheDuration = time.Duration(app.ServerConfig.CacheHTMLMaxAge) * time.Second
@@ -47,7 +51,7 @@ func AddCacheHeaders(app *App, next http.Handler) http.Handler {
 				// "cache_html_max_age" is usually for HTML.
 				cacheDuration = time.Duration(app.ServerConfig.CacheHTMLMaxAge) * time.Second
 			}
-			
+
 			w.Header().Set("Cache-Control", fmt.Sprintf("public, max-age=%d, s-maxage=%d", int(cacheDuration.Seconds()), int(cacheDuration.Seconds())))
 			w.Header().Set("Vary", "Accept-Encoding")
 		}
@@ -55,4 +59,3 @@ func AddCacheHeaders(app *App, next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
-

@@ -1,6 +1,11 @@
 # MDServe
 
-[![Build Pipeline](https://github.com/jaysongiroux/MDServe/actions/workflows/ci.yml/badge.svg)](https://github.com/jaysongiroux/MDServe/actions/workflows/ci.yml)
+![hero image](/assets/logo.jpg)
+
+<a href="https://github.com/jaysongiroux/MDServe/actions/workflows/ci.yml">
+  <img src="https://github.com/jaysongiroux/MDServe/actions/workflows/ci.yml/badge.svg" alt="Build Pipeline" style="height: 20px; width: auto; vertical-align: middle;">
+</a>
+
 
 **MDServe** is a high-performance, flat-file content server built with Go.
 
@@ -78,6 +83,27 @@ You can override the default config file paths using environment variables:
 Both Config variables support:
 - Local file paths (e.g., `/path/to/config.yaml`)
 - HTTP/HTTPS URLs (e.g., `https://example.com/config.yaml`)
+
+##### **Important Note for Remote Configs:**
+To fetch configuration files from a remote Git repository (including private ones), you must set both/ either `MD_SERVER_CONFIG_PATH` and `MD_SITE_CONFIG_PATH` to the HTTPS Git repository URL (Ends in `.git` **Important**).
+
+Example for remote config from a Git repository:
+```bash
+# Point both to the same repo URL
+MD_SERVER_CONFIG_PATH="https://github.com/username/mdserve-content.git"
+MD_SITE_CONFIG_PATH="https://github.com/username/mdserve-content.git"
+# Optional: Specify branch (default is master/main)
+MD_CONFIG_BRANCH="main"
+# Optional: Specify the directory within the repo where configs are located. Default is the root of the repo
+MD_CONFIG_LOCATION="config"
+# Required for private repositories
+GIT_USERNAME="your-username"
+GIT_PASSWORD="your-pat-token"
+```
+
+The `git_remote_content_path` in `config.yaml` is exclusively for content (markdown), assets, user-static assets, and templates. It does **not** load the system configuration itself from that remote. If you want to bootstrap your server with a remote configuration, you **must** use the environment variables as shown above.
+
+The default configuration is the `config.yaml` and `site-config.yaml` provided in this repository.
 
 Example usage:
 

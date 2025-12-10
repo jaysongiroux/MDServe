@@ -35,7 +35,7 @@ func WriteHTMLFile(basePath string, fileName string, html string) error {
 	// check if the HTMLFilesPath exists
 	htmlFilesPath := filepath.Join(basePath, constants.HTMLFilesPath)
 	if _, err := os.Stat(htmlFilesPath); os.IsNotExist(err) {
-		err = os.MkdirAll(htmlFilesPath, 0755)
+		err = os.MkdirAll(htmlFilesPath, 0750)
 		if err != nil {
 			return err
 		}
@@ -47,13 +47,13 @@ func WriteHTMLFile(basePath string, fileName string, html string) error {
 	// Ensure the directory for the file exists
 	fileDir := filepath.Dir(filePath)
 	if _, err := os.Stat(fileDir); os.IsNotExist(err) {
-		err = os.MkdirAll(fileDir, 0755)
+		err = os.MkdirAll(fileDir, 0750)
 		if err != nil {
 			return err
 		}
 	}
 
-	err := os.WriteFile(filePath, []byte(html), 0644)
+	err := os.WriteFile(filePath, []byte(html), 0600)
 	if err != nil {
 		return err
 	}

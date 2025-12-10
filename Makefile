@@ -15,3 +15,6 @@ build-docker:
 build-and-run:
 	make build
 	make run
+
+lint:
+	golangci-lint run --fix ./...

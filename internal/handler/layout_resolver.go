@@ -28,7 +28,12 @@ func determineLayout(app *App, pageName string) (string, string) {
 	return layoutFile, layoutFilter
 }
 
-func renderCustomLayout(app *App, w http.ResponseWriter, layoutFile, pageName, mdPath string, data *TemplateData) error {
+func renderCustomLayout(
+	app *App,
+	w http.ResponseWriter,
+	layoutFile, pageName, mdPath string,
+	data *TemplateData,
+) error {
 	customLayoutName := layoutFile + ".html"
 	app.Logger.Info("Using custom layout: %s", customLayoutName)
 
@@ -47,6 +52,7 @@ func renderCustomLayout(app *App, w http.ResponseWriter, layoutFile, pageName, m
 	}
 
 	// Nest within default layout
+	// #nosec G203 -- Content is from Go template execution with trusted template files, not user input
 	data.Content = template.HTML(customLayoutBuf.String())
 	if err := app.Templates.ExecuteTemplate(w, defaultLayoutFile, data); err != nil {
 		app.Logger.Error("Template execution error: %v", err)

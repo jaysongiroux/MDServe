@@ -6,7 +6,6 @@ import (
 	_ "image/gif"  // Register GIF decoder
 	_ "image/jpeg" // Register JPEG decoder
 	_ "image/png"  // Register PNG decoder
-	"log"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -26,17 +25,22 @@ var (
 // convertToWebP reads an image and saves a .webp version next to it
 func ConvertToWebP(path string, optimize bool, quality int) error {
 	// 1. Open original file
-	file, err := os.Open(path)
+	file, err := os.Open(filepath.Clean(path))
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() {
+		err := file.Close()
+		if err != nil {
+			logger.Error("Failed to close file: %v", err)
+		}
+	}()
 
 	// 2. Decode (Auto-detects format via imports)
 	img, _, err := image.Decode(file)
 	if err != nil {
 		// If decode fails (e.g. corrupted image), we log and skip
-		log.Printf("Skipping %s: could not decode", path)
+		logger.Error("Skipping %s: could not decode", path)
 		return err
 	}
 
@@ -44,11 +48,16 @@ func ConvertToWebP(path string, optimize bool, quality int) error {
 	ext := filepath.Ext(path)
 	webpPath := strings.TrimSuffix(path, ext) + ".webp"
 
-	outFile, err := os.Create(webpPath)
+	outFile, err := os.Create(filepath.Clean(webpPath))
 	if err != nil {
 		return err
 	}
-	defer outFile.Close()
+	defer func() {
+		err := outFile.Close()
+		if err != nil {
+			logger.Error("Failed to close output file: %v", err)
+		}
+	}()
 
 	// 4. Encode as WebP
 	// Lossless: false = similar to JPEG compression
@@ -78,7 +87,7 @@ func GetIconPathsFromSiteWebmanifest(path string) ([]string, error) {
 		return nil, err
 	}
 
-	webmanifest, err := os.ReadFile(path)
+	webmanifest, err := os.ReadFile(filepath.Clean(path))
 	if err != nil {
 		return nil, err
 	}

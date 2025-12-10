@@ -35,7 +35,7 @@ type SiteMapEntry struct {
 // CompileHTMLFile converts a markdown file to an HTML string
 func CompileHTMLFile(filePath string, siteConfig *config.SiteConfig) (string, error) {
 	// 1. Read the file from disk
-	content, err := os.ReadFile(filePath)
+	content, err := os.ReadFile(filepath.Clean(filePath))
 	if err != nil {
 		return "", err
 	}

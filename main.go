@@ -6,6 +6,7 @@ package main
 // and a cron logger adapter for cron jobs
 
 import (
+	"errors"
 	"html/template"
 	"net/http"
 	"os"
@@ -13,6 +14,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"syscall"
+	"time"
 
 	"github.com/jaysongiroux/mdserve/internal/assets"
 	"github.com/jaysongiroux/mdserve/internal/config"
@@ -57,7 +60,16 @@ func prelimSetup(callerName string) (*handler.App, error) {
 	if err != nil {
 		appLogger.Fatal("Failed to initialize logger: %v", err)
 	}
-	defer logger.Sync()
+	defer func() {
+		err = logger.Sync()
+		if err != nil {
+			// ignore ENOTTY error
+			if errors.Is(err, syscall.ENOTTY) {
+				return
+			}
+			appLogger.Fatal("Failed to sync logger: %v", err)
+		}
+	}()
 
 	appLogger = logger.New(callerName, app.ServerConfig.LogLevel)
 	app.Logger = appLogger
@@ -119,7 +131,10 @@ func prelimSetup(callerName string) (*handler.App, error) {
 
 	// handle asset optimization
 	logger.Info("Optimizing assets")
-	app.AssetsGeneratedPath = filepath.Join(app.ServerConfig.GeneratedPath, constants.GeneratedAssetsPath)
+	app.AssetsGeneratedPath = filepath.Join(
+		app.ServerConfig.GeneratedPath,
+		constants.GeneratedAssetsPath,
+	)
 	logger.Info("Moving assets to generated path: %s", app.AssetsGeneratedPath)
 	err = assets.MoveAssets(app.ServerConfig.AssetsPath, app.AssetsGeneratedPath)
 	if err != nil {
@@ -138,7 +153,9 @@ func prelimSetup(callerName string) (*handler.App, error) {
 		appLogger.Fatal("Failed to get optimizable assets: %v", err)
 	}
 
-	siteManifestIconPaths, err := assets.GetIconPathsFromSiteWebmanifest(filepath.Join(app.ServerConfig.AssetsPath, "site.webmanifest"))
+	siteManifestIconPaths, err := assets.GetIconPathsFromSiteWebmanifest(
+		filepath.Join(app.ServerConfig.AssetsPath, "site.webmanifest"),
+	)
 	if err != nil {
 		appLogger.Fatal("Failed to get site manifest icon paths: %v", err)
 	}
@@ -150,10 +167,17 @@ func prelimSetup(callerName string) (*handler.App, error) {
 		// filter out the assets related to the site.webmanifest
 		logger.Info("Checking asset: %s", asset)
 		if assets.ShouldSkipAsset(asset, siteManifestIconPaths) {
-			logger.Info("Skipping asset: %s because it is a site manifest icon, favicon, SVG, or a format that is not supported for optimization", asset)
+			logger.Info(
+				"Skipping asset: %s because it is a site manifest icon, favicon, SVG, or a format that is not supported for optimization",
+				asset,
+			)
 			continue
 		}
-		err = assets.ConvertToWebP(asset, app.ServerConfig.OptimizeImages, app.ServerConfig.OptimizeImagesQuality)
+		err = assets.ConvertToWebP(
+			asset,
+			app.ServerConfig.OptimizeImages,
+			app.ServerConfig.OptimizeImagesQuality,
+		)
 		if err != nil {
 			appLogger.Fatal("Failed to convert asset to WebP: %v", err)
 		}
@@ -166,7 +190,10 @@ func prelimSetup(callerName string) (*handler.App, error) {
 	logger.Info("Assets optimized successfully")
 
 	// move all user-static assets to the generated path
-	app.UserStaticGeneratedPath = filepath.Join(app.ServerConfig.GeneratedPath, constants.UserStaticPath)
+	app.UserStaticGeneratedPath = filepath.Join(
+		app.ServerConfig.GeneratedPath,
+		constants.UserStaticPath,
+	)
 	logger.Info("Moving user-static assets to generated path: %s", app.UserStaticGeneratedPath)
 	err = assets.MoveAssets(app.ServerConfig.UserStaticPath, app.UserStaticGeneratedPath)
 	if err != nil {
@@ -174,7 +201,10 @@ func prelimSetup(callerName string) (*handler.App, error) {
 	}
 	logger.Info("User-static assets moved successfully")
 
-	app.TemplatesGeneratedPath = filepath.Join(app.ServerConfig.GeneratedPath, constants.TemplatesPath)
+	app.TemplatesGeneratedPath = filepath.Join(
+		app.ServerConfig.GeneratedPath,
+		constants.TemplatesPath,
+	)
 	logger.Info("Moving templates to generated path: %s", app.TemplatesGeneratedPath)
 	err = assets.MoveAssets(app.ServerConfig.TemplatesPath, app.TemplatesGeneratedPath)
 	if err != nil {
@@ -204,7 +234,9 @@ func main() {
 	appLogger := logger.New("Initial Setup", logger.DebugLevel)
 	// Load .env file if it exists
 	if err := godotenv.Load(); err != nil {
-		appLogger.Warn("No .env file found or unable to load it, using system environment variables")
+		appLogger.Warn(
+			"No .env file found or unable to load it, using system environment variables",
+		)
 	}
 
 	app, err := prelimSetup("Main")
@@ -245,7 +277,10 @@ func main() {
 	}
 
 	if app.ServerConfig.GenerationCronEnabled {
-		app.Logger.Info("Generation cron is enabled. Starting cron scheduler using interval %s...", app.ServerConfig.GenerationCronInterval)
+		app.Logger.Info(
+			"Generation cron is enabled. Starting cron scheduler using interval %s...",
+			app.ServerConfig.GenerationCronInterval,
+		)
 		// Initialize and start cron scheduler
 		cronLogger := app.Logger.ToCronLogger(app.ServerConfig.LogLevel == logger.DebugLevel)
 		c := cron.New(cron.WithChain(
@@ -268,18 +303,29 @@ func main() {
 		app.Logger.Info("Cron scheduler started - hourly job registered")
 
 		// Ensure cron stops when main exits
-		defer c.Stop()
+		defer func() {
+			err := c.Stop()
+			if err != nil {
+				app.Logger.Fatal("Failed to stop cron scheduler: %v", err)
+			}
+		}()
 	}
 
 	mux := http.NewServeMux()
 
 	// Serve Optimized System Assets (Mapped to /assets/)
-	mux.Handle("GET /assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir(app.AssetsGeneratedPath))))
+	mux.Handle(
+		"GET /assets/",
+		http.StripPrefix("/assets/", http.FileServer(http.Dir(app.AssetsGeneratedPath))),
+	)
 
 	// Serve User Static Assets (Mapped to /user-static/)
 	// Assuming this config exists in ServerConfig
 	userStaticPath := "user-static"
-	mux.Handle("GET /user-static/", http.StripPrefix("/user-static/", http.FileServer(http.Dir(userStaticPath))))
+	mux.Handle(
+		"GET /user-static/",
+		http.StripPrefix("/user-static/", http.FileServer(http.Dir(userStaticPath))),
+	)
 
 	mux.HandleFunc("GET /sitemap.xml", handler.HandleSitemap(app))
 
@@ -290,13 +336,24 @@ func main() {
 
 	// --- 5. Start Server ---
 	port := app.ServerConfig.Port
-	app.Logger.Info("Starting MDServe on port %d in %s mode", port, app.ServerConfig.HTMLCompilationMode)
+	app.Logger.Info(
+		"Starting MDServe on port %d in %s mode",
+		port,
+		app.ServerConfig.HTMLCompilationMode,
+	)
 
 	// Wrap mux with middleware
 	// Order: CORS -> Cache -> Mux
 	srvHandler := handler.AddCORSHeaders(handler.AddCacheHeaders(app, mux))
 
-	if err := http.ListenAndServe(":"+strconv.Itoa(port), srvHandler); err != nil {
+	// add timeout to the server
+	srv := &http.Server{
+		Addr:         ":" + strconv.Itoa(port),
+		Handler:      srvHandler,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+	}
+	if err := srv.ListenAndServe(); err != nil {
 		app.Logger.Fatal("Server failed: %v", err)
 	}
 }

@@ -17,13 +17,22 @@ func loadPageContent(app *App, pageName, mdPath string) (template.HTML, error) {
 }
 
 func loadStaticHTML(app *App, pageName string) (template.HTML, error) {
-	htmlPath := filepath.Join(app.ServerConfig.GeneratedPath, constants.HTMLFilesPath, pageName+".html")
-	contentBytes, err := os.ReadFile(htmlPath)
+	htmlPath := filepath.Join(
+		app.ServerConfig.GeneratedPath,
+		constants.HTMLFilesPath,
+		pageName+".html",
+	)
+	contentBytes, err := os.ReadFile(filepath.Clean(htmlPath))
 
 	if os.IsNotExist(err) {
 		// Try with /index.html appended
-		indexPath := filepath.Join(app.ServerConfig.GeneratedPath, constants.HTMLFilesPath, pageName, "index.html")
-		contentBytes, err = os.ReadFile(indexPath)
+		indexPath := filepath.Join(
+			app.ServerConfig.GeneratedPath,
+			constants.HTMLFilesPath,
+			pageName,
+			"index.html",
+		)
+		contentBytes, err = os.ReadFile(filepath.Clean(indexPath))
 		if os.IsNotExist(err) {
 			app.Logger.Warn("404 Not Found: %s", htmlPath)
 			return "", NewPageError(Err404Code, Err404Title, Err404Message)
@@ -35,6 +44,7 @@ func loadStaticHTML(app *App, pageName string) (template.HTML, error) {
 		return "", NewPageError(Err500Code, Err500Title, Err500Message)
 	}
 
+	// #nosec G203 -- Content is from trusted markdown files compiled at server startup, not user input
 	return template.HTML(contentBytes), nil
 }
 
@@ -56,12 +66,19 @@ func loadAndCompileMarkdown(app *App, pageName, mdPath string) (template.HTML, e
 		return "", NewPageError(Err500Code, Err500Title, Err500Message)
 	}
 
+	// #nosec G203 -- Content is from trusted markdown files from local filesystem or controlled git repo, not user input
 	return template.HTML(htmlString), nil
 }
 
 func getHTMLContent(app *App, pageName, mdPath string) (string, error) {
 	if app.ServerConfig.HTMLCompilationMode == constants.HTMLCompilationModeStatic {
-		htmlContentBytes, err := os.ReadFile(filepath.Join(app.ServerConfig.GeneratedPath, constants.HTMLFilesPath, pageName+".html"))
+		htmlContentBytes, err := os.ReadFile(filepath.Clean(
+			filepath.Join(
+				app.ServerConfig.GeneratedPath,
+				constants.HTMLFilesPath,
+				pageName+".html",
+			)),
+		)
 		if err != nil {
 			app.Logger.Error("Error reading html content: %v", err)
 			return "", NewPageError(Err500Code, Err500Title, Err500Message)
