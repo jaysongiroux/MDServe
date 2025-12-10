@@ -60,11 +60,12 @@ func prelimSetup(callerName string) (*handler.App, error) {
 	if err != nil {
 		appLogger.Fatal("Failed to initialize logger: %v", err)
 	}
+
 	defer func() {
 		err = logger.Sync()
 		if err != nil {
-			// ignore ENOTTY error
-			if errors.Is(err, syscall.ENOTTY) {
+			// Ignore errors from syncing stdout/stderr in non-TTY environments (Docker, pipes, etc.)
+			if errors.Is(err, syscall.ENOTTY) || errors.Is(err, syscall.EINVAL) {
 				return
 			}
 			appLogger.Fatal("Failed to sync logger: %v", err)
