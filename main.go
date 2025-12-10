@@ -281,6 +281,8 @@ func main() {
 	userStaticPath := "user-static"
 	mux.Handle("GET /user-static/", http.StripPrefix("/user-static/", http.FileServer(http.Dir(userStaticPath))))
 
+	mux.HandleFunc("GET /sitemap.xml", handler.HandleSitemap(app))
+
 	// Main Page Handler
 	mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
 		app.Handler(app, w, r)
@@ -290,7 +292,11 @@ func main() {
 	port := app.ServerConfig.Port
 	app.Logger.Info("Starting MDServe on port %d in %s mode", port, app.ServerConfig.HTMLCompilationMode)
 
-	if err := http.ListenAndServe(":"+strconv.Itoa(port), mux); err != nil {
+	// Wrap mux with middleware
+	// Order: CORS -> Cache -> Mux
+	srvHandler := handler.AddCORSHeaders(handler.AddCacheHeaders(app, mux))
+
+	if err := http.ListenAndServe(":"+strconv.Itoa(port), srvHandler); err != nil {
 		app.Logger.Fatal("Server failed: %v", err)
 	}
 }

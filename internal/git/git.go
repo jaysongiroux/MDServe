@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-git/go-git/v6"
 	"github.com/go-git/go-git/v6/plumbing"
+	"github.com/go-git/go-git/v6/plumbing/transport/http"
 	"github.com/jaysongiroux/mdserve/internal/config"
 	"github.com/jaysongiroux/mdserve/internal/files"
 	"github.com/jaysongiroux/mdserve/internal/logger"
@@ -21,6 +22,16 @@ var (
 	ErrAlreadyUpToDate = "already up-to-date"
 )
 
+func buildGitAuthOptions() *http.BasicAuth {
+	if os.Getenv("GIT_USERNAME") != "" && os.Getenv("GIT_PASSWORD") != "" {
+		return &http.BasicAuth{
+			Username: os.Getenv("GIT_USERNAME"),
+			Password: os.Getenv("GIT_PASSWORD"),
+		}
+	}
+	return nil
+}
+
 func fetchGitRemoteContent(url string, destinationPath string, branch string) error {
 	// clone the remote repository to the destination path
 	logger.Debug("Cloning git remote content from %s to %s", url, destinationPath)
@@ -28,6 +39,7 @@ func fetchGitRemoteContent(url string, destinationPath string, branch string) er
 		URL:          url,
 		Depth:        1,
 		SingleBranch: true,
+		Auth:         buildGitAuthOptions(),
 	})
 
 	if err != nil {
@@ -109,6 +121,7 @@ func pullLatestGitRemoteContent(branch string, directory string) error {
 		RemoteName:    "origin",
 		ReferenceName: branchRefName,
 		Force:         true,
+		Auth:          buildGitAuthOptions(),
 	})
 
 	if err != nil {

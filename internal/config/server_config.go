@@ -28,6 +28,8 @@ type ServerConfig struct {
 	GitRemoteContentUserStaticDirectory string                        `yaml:"git_remote_content_user_static_directory"`
 	GenerationCronEnabled               bool                          `yaml:"generation_cron_enabled"`
 	GenerationCronInterval              string                        `yaml:"generation_cron_interval"`
+	CacheHTMLMaxAge                     int                           `yaml:"cache_html_max_age"`
+	CacheStaticMaxAge                   int                           `yaml:"cache_static_max_age"`
 }
 
 func LoadServerConfig() (*ServerConfig, error) {

@@ -119,6 +119,15 @@ git_remote_content_branch: master
 - Branch name is required when git remote content URL is provided.
 - Git remote content and demo mode are mutually exclusive.
 
+**Authentication (Private Repositories):**
+
+To access private repositories, you must provide authentication credentials via environment variables:
+
+- **`GIT_USERNAME`**: The username for git authentication.
+- **`GIT_PASSWORD`**: The password or personal access token (PAT) for git authentication.
+
+When both variables are present, MDServe will use Basic Auth to clone/pull from the remote repository. This is secure and recommended for private repositories.
+
 **How It Works:**
 
 When git remote content is configured:
@@ -349,8 +358,3 @@ To stop the container:
 ```bash
 docker-compose down
 ```
-
-## Wishlist
-- [ ] CORS
-- [ ] Caching
-- [ ] private remote repos

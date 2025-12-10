@@ -68,3 +68,9 @@ generation_cron_enabled: true
 #  - "standard" cron format: https://en.wikipedia.org/wiki/Cron ex. "0 12 * * *"
 #  - "robfig" cron format: https://github.com/robfig/cron  ex. "@hourly"
 generation_cron_interval: "@hourly"
+
+# cache control settings
+# cache control settings for the HTML files
+cache_html_max_age: 3600 # 1 hour
+# cache control settings for the assets and user static files
+cache_static_max_age: 2592000 # 30 days
