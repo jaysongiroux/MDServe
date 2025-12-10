@@ -126,7 +126,15 @@ To access private repositories, you must provide authentication credentials via 
 - **`GIT_USERNAME`**: The username for git authentication.
 - **`GIT_PASSWORD`**: The password or personal access token (PAT) for git authentication.
 
-When both variables are present, MDServe will use Basic Auth to clone/pull from the remote repository. This is secure and recommended for private repositories.
+For Personal access tokens the minimum permissions are:
+- Contents
+- Metadata
+
+> [!CAUTION]
+> It is not recommended to use your password, instead use a personal access token. 
+
+
+When both variables are present and a remote repository is configured in the `config.yaml`, MDServe will use Basic Auth to clone/pull from the remote repository. This is secure and recommended for private repositories.
 
 **How It Works:**
 
