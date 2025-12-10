@@ -1,12 +1,12 @@
 # MDServe
 
+[![Build Pipeline](https://github.com/jaysongiroux/MDServe/actions/workflows/ci.yml/badge.svg)](https://github.com/jaysongiroux/MDServe/actions/workflows/ci.yml)
+
 **MDServe** is a high-performance, flat-file content server built with Go.
 
 MDServe transforms a folder of Markdown files into a dynamic website. Unlike traditional Static Site Generators (SSGs), MDServe is a live HTTP server that can compile content on-demand or serve pre-compiled HTML from memory. Built using Go's standard library `html/template` package, it supports advanced features like custom layouts, pagination, tag filtering, and metadata-driven content organization.
 
 It is designed to be lightweight and portable—a single binary is all you need to run your site.
-
------
 
 ## Quick Start
 
@@ -20,8 +20,6 @@ It is designed to be lightweight and portable—a single binary is all you need 
    ./mdserve
    ```
 5. Visit `http://localhost:8080`
-
------
 
 ## Core Features
 
@@ -40,7 +38,6 @@ It is designed to be lightweight and portable—a single binary is all you need 
   * **Cascading Styling:** Ships with a base CSS layer, but allows users to inject a `custom.css` file that automatically overrides defaults.
   * **Zero Dependencies:** Compiles into a single static binary. No external runtimes or heavy container orchestration required.
 
------
 
 ## Configuration & Architecture
 
@@ -190,8 +187,6 @@ When using git remote content with static compilation mode:
 
 When content is pushed to your remote repository, the cron will automatically pull the changes and regenerate all static files at the configured interval. This provides a balance between static site performance and relatively fresh content updates without requiring server restarts.
 
------
-
 ## Directory Structure
 
 The system expects a specific folder hierarchy to function:
@@ -208,8 +203,6 @@ The system expects a specific folder hierarchy to function:
   * **`/user-static`**: User-provided assets (like `custom.css` and `custom.js`) that persist across updates.
   * **`/.static`**: Auto-generated files (sitemap.json) created at startup in static mode.
   * **`/.git-remote-content`**: Auto-generated directory when using git remote content. Contains the cloned repository.
-
------
 
 ## Markdown Metadata
 
@@ -231,7 +224,6 @@ MDServe supports JSON metadata embedded in HTML comments at the top of Markdown 
 
 Metadata fields are automatically extracted and made available in custom layouts via the sitemap. If `creation_date` or `last_modification_date` are not provided, the file's modification time is used as a fallback.
 
------
 
 ## Custom Layouts
 
@@ -255,7 +247,6 @@ Layout templates are stored in `/templates/layout_templates/` and have access to
 - `{{ .PageList }}`: Filtered list of pages (when `filter` is specified)
 - `{{ .Site }}`: Site configuration (page_size, theme, etc.)
 
------
 
 ## Development Workflow
 
@@ -280,7 +271,6 @@ MDServe is written in Go. For the best development experience, we recommend usin
 
 *Note: If your `html_compilation_mode` is set to `live`, you do not need to restart the server to see changes made to Markdown files. Simply refresh your browser. In `static` mode, you must restart the server to regenerate the sitemap and see content updates, unless you have the generation cron enabled which will automatically regenerate content at the configured interval.*
 
------
 
 ## Styling Strategy
 
@@ -289,7 +279,6 @@ MDServe utilizes the "Cascade" in CSS to allow for safe customization.
 1.  **System Styles:** The server first loads `base.css`, which handles layout (Grid/Flexbox), typography, and responsiveness.
 2.  **User Overrides:** The server checks for the existence of `custom.css` in the `/user-static` directory. If found, it is loaded *after* the base styles, allowing you to override colors, fonts, and spacing without breaking the core layout.
 
------
 
 ## Deployment
 
