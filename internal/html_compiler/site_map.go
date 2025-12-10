@@ -17,41 +17,44 @@ import (
 
 func SortSiteMap(siteMap []SiteMapEntry, sortDirection config.SortDirection) (*[]SiteMapEntry, error) {
 	if len(siteMap) == 0 {
+		logger.Debug("Site map is empty, returning empty site map")
 		return &siteMap, nil
 	}
 
-	sortFunc := func(i, j int) bool {
+	if sortDirection != config.SortDirectionAsc && sortDirection != config.SortDirectionDesc {
+		return nil, fmt.Errorf("invalid sort direction: %s", sortDirection)
+	}
+
+	sort.Slice(siteMap, func(i, j int) bool {
 		var iDate, jDate time.Time
 
-		// setting the dates for sorting
+		// Get the creation dates for sorting
 		iDate = GetCreationDate(siteMap[i])
 		jDate = GetCreationDate(siteMap[j])
 
-		// Sorting
-		if !iDate.IsZero() && !jDate.IsZero() {
+		// Handle zero dates - items with dates should come before items without dates
+		if iDate.IsZero() && jDate.IsZero() {
+			// Both zero, fall back to CreationDate field
+			iDate = siteMap[i].CreationDate
+			jDate = siteMap[j].CreationDate
+		} else if iDate.IsZero() {
+			// i has no date, j should come first
+			return sortDirection == "asc"
+		} else if jDate.IsZero() {
+			// j has no date, i should come first
+			return sortDirection == "desc"
+		}
+
+		// Both have dates, compare based on sort direction
+		switch sortDirection {
+		case "asc":
 			return iDate.Before(jDate)
-		}
-		if !iDate.IsZero() && jDate.IsZero() {
-			return true
-		}
-		if iDate.IsZero() && !jDate.IsZero() {
+		case "desc":
+			return iDate.After(jDate)
+		default:
 			return false
 		}
-		return siteMap[i].CreationDate.Before(siteMap[j].CreationDate)
-	}
-
-	if sortDirection == "asc" {
-		sort.Slice(siteMap, sortFunc)
-	} else if sortDirection == "desc" {
-		sortedSiteMap := make([]SiteMapEntry, len(siteMap))
-		copy(sortedSiteMap, siteMap)
-		sort.Slice(sortedSiteMap, func(i, j int) bool {
-			return sortFunc(j, i)
-		})
-		siteMap = sortedSiteMap
-	} else {
-		return nil, fmt.Errorf("invalid sort direction: %s", sortDirection)
-	}
+	})
 
 	return &siteMap, nil
 }
@@ -141,10 +144,14 @@ func GenerateSiteMap(markdownFilePath string, siteConfig *config.SiteConfig) (*[
 	}
 
 	if siteMap != nil {
+		logger.Debug("Sorting site map with sort direction: %s", siteConfig.Site.SortDirection)
 		sortedSiteMap, err := SortSiteMap(siteMap, siteConfig.Site.SortDirection)
 		if err != nil {
+			logger.Error("Failed to sort site map: %v", err)
 			return nil, fmt.Errorf("failed to sort site map: %v", err)
 		}
+
+		logger.Debug("Successfully sorted site map")
 
 		return sortedSiteMap, nil
 	}

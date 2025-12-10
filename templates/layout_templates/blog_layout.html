@@ -33,24 +33,23 @@
 </div>
 
 <script>
-
   const updateUrlParam = (paramName, paramValue) => {
-  	// maintains current params but updates the given param
-  	const currentUrl = window.location.href;
-  	const newUrl = new URL(currentUrl);
-  	newUrl.searchParams.set(paramName, paramValue);
-  	window.location.href = newUrl.toString();
+      // maintains current params but updates the given param
+      const currentUrl = window.location.href;
+      const newUrl = new URL(currentUrl);
+      newUrl.searchParams.set(paramName, paramValue);
+      window.location.href = newUrl.toString();
   }
 
   const clearUrlParam = (paramName) => {
-  	// maintains current params but removes the given param
-  	const currentUrl = window.location.href;
-  	const newUrl = new URL(currentUrl);
-  	newUrl.searchParams.delete(paramName);
-  	window.location.href = newUrl.toString();
+      // maintains current params but removes the given param
+      const currentUrl = window.location.href;
+      const newUrl = new URL(currentUrl);
+      newUrl.searchParams.delete(paramName);
+      window.location.href = newUrl.toString();
   }
 
-   const pageList = {{ .PageList}};
+   const pageList = {{ .PageList}} || []
    const pageSize = {{ .Site.PageSize }};
 
    const urlParams = new URLSearchParams(window.location.search);
@@ -64,10 +63,10 @@
    if (currentTag) {
   const lowerCurrentTag = currentTag.toLowerCase();
   paginatedSiteMap = paginatedSiteMap.filter(article =>
-    article?.metadata?.tags?.some(tag => tag.toLowerCase().includes(lowerCurrentTag))
+      article?.metadata?.tags?.some(tag => tag.toLowerCase().includes(lowerCurrentTag))
   );
   totalFilteredPages = pageList.filter(article =>
-    article?.metadata?.tags?.some(tag => tag.toLowerCase().includes(lowerCurrentTag))
+      article?.metadata?.tags?.some(tag => tag.toLowerCase().includes(lowerCurrentTag))
   ).length;
    } else {
   totalFilteredPages = pageList.length;
@@ -82,9 +81,9 @@
 
    paginatedSiteMap.forEach(article => {
   const structuredMetadata = {
-  	author: article?.metadata?.author,
-  	description: article?.metadata?.description,
-  	tags: article?.metadata?.tags,
+      author: article?.metadata?.author,
+      description: article?.metadata?.description,
+      tags: article?.metadata?.tags,
   }
   const creationDate = article?.creation_date
   const lastModificationDate = article?.last_modified_date
@@ -100,34 +99,34 @@
 
   // Generate a link for each tag
   if (structuredMetadata.tags && structuredMetadata.tags.length > 0) {
-  	const tags = structuredMetadata.tags.map(tag => {
-  		const tagLink = document.createElement('a');
-  		tagLink.href = `?tag=${encodeURIComponent(tag)}`;
-  		tagLink.textContent = `#${tag}`;
-  		tagLink.className = 'text-sm text-blue-600 hover:underline';
-  		return tagLink;
-  	});
+      const tags = structuredMetadata.tags.map(tag => {
+          const tagLink = document.createElement('a');
+          tagLink.href = `?tag=${encodeURIComponent(tag)}`;
+          tagLink.textContent = `#${tag}`;
+          tagLink.className = 'text-sm text-blue-600 hover:underline';
+          return tagLink;
+      });
 
-  	// Append each tag link to the container
-  	tags.forEach(tagLink => {
-  		tagContainer.appendChild(tagLink);
-  	});
+      // Append each tag link to the container
+      tags.forEach(tagLink => {
+          tagContainer.appendChild(tagLink);
+      });
   }
 
   articleEl.innerHTML = `
   <div class="flex flex-row gap-4">
-  	<p class="text-sm text-neutral-500 !mb-1">${new Date(creationDate).toLocaleDateString()}</p>
+      <p class="text-sm text-neutral-500 !mb-1">${new Date(creationDate).toLocaleDateString()}</p>
 
-  	${tagContainer.innerHTML}
+      ${tagContainer.innerHTML}
   </div>
   <h4 class="text-xl font-semibold mb-2 !mt-0">
-  	<a href="${article.path}" class="!text-neutral-900 hover:text-blue-600">${article.first_header}</a>
-  	</h4>
-  	${description ? `<p class="text-neutral-600 mb-2">${description}</p>` : ''}
+      <a href="${article.path}" class="!text-neutral-900 hover:text-blue-600">${article.first_header}</a>
+      </h4>
+      ${description ? `<p class="text-neutral-600 mb-2">${description}</p>` : ''}
 
-  	${structuredMetadata?.author ? `<p class="text-sm text-neutral-500 !mb-1">Written by ${structuredMetadata.author}</p>`: ''}
+      ${structuredMetadata?.author ? `<p class="text-sm text-neutral-500 !mb-1">Written by ${structuredMetadata.author}</p>`: ''}
 
-  	<p class="text-sm text-neutral-500 !mb-1">Last modified on ${new Date(lastModificationDate).toLocaleDateString()}</p>
+      <p class="text-sm text-neutral-500 !mb-1">Last modified on ${new Date(lastModificationDate).toLocaleDateString()}</p>
   `;
   articlesContainer.appendChild(articleEl);
    });
