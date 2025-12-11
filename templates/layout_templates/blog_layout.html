@@ -90,7 +90,7 @@
   const description = article?.metadata?.description || article?.first_paragraph
 
   const articleEl = document.createElement('div');
-  articleEl.className = 'p-4 border border-neutral-200 rounded hover:shadow-md transition-shadow';
+  articleEl.className = 'p-4 border border-neutral-200 rounded hover:shadow-md transition-shadow blog-article-container';
 
 
   // Create a container for the tags
@@ -115,18 +115,18 @@
 
   articleEl.innerHTML = `
   <div class="flex flex-row gap-4">
-      <p class="text-sm text-neutral-500 !mb-1">${new Date(creationDate).toLocaleDateString()}</p>
+      <p class="text-sm text-neutral-500 !mb-1 blog-article-creation-date">${new Date(creationDate).toLocaleDateString()}</p>
 
       ${tagContainer.innerHTML}
   </div>
   <h4 class="text-xl font-semibold mb-2 !mt-0">
       <a href="${article.path}" class="!text-neutral-900 hover:text-blue-600">${article.first_header}</a>
       </h4>
-      ${description ? `<p class="text-neutral-600 mb-2">${description}</p>` : ''}
+      ${description ? `<p class="text-neutral-600 mb-2 blog-article-description">${description}</p>` : ''}
 
-      ${structuredMetadata?.author ? `<p class="text-sm text-neutral-500 !mb-1">Written by ${structuredMetadata.author}</p>`: ''}
+      ${structuredMetadata?.author ? `<p class="text-sm text-neutral-500 !mb-1 blog-article-author">Written by ${structuredMetadata.author}</p>`: ''}
 
-      <p class="text-sm text-neutral-500 !mb-1">Last modified on ${new Date(lastModificationDate).toLocaleDateString()}</p>
+      <p class="text-sm text-neutral-500 !mb-1 blog-article-last-modified">Last modified on ${new Date(lastModificationDate).toLocaleDateString()}</p>
   `;
   articlesContainer.appendChild(articleEl);
    });
