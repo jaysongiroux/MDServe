@@ -14,6 +14,7 @@ import (
 	chromahtml "github.com/alecthomas/chroma/v2/formatters/html"
 	"github.com/jaysongiroux/mdserve/internal/config"
 	"github.com/jaysongiroux/mdserve/internal/constants"
+	"github.com/jaysongiroux/mdserve/internal/html_compiler/extention/caption"
 	"github.com/jaysongiroux/mdserve/internal/logger"
 	"github.com/yuin/goldmark"
 	highlighting "github.com/yuin/goldmark-highlighting/v2"
@@ -50,6 +51,7 @@ func CompileHTMLFile(filePath string, siteConfig *config.SiteConfig) (string, er
 			extension.Strikethrough,
 			extension.Linkify,
 			extension.TaskList,
+			caption.Caption,
 			&mermaid.Extender{},
 			highlighting.NewHighlighting(
 				highlighting.WithStyle(siteConfig.Site.Theme.Code.Theme),

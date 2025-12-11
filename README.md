@@ -275,6 +275,18 @@ Layout templates are stored in `/templates/layout_templates/` and have access to
 - `{{ .PageList }}`: Filtered list of pages (when `filter` is specified)
 - `{{ .Site }}`: Site configuration (page_size, theme, etc.)
 
+## Custom Blocks
+MDServe introduces some custom markdown blocks to make formatting a bit easier.
+
+### Captions
+Captions are center-aligned italic paragraphs that allow users to caption the block above it.
+
+**Notation:**
+```
+^^ this is a caption ^^
+^^this is also a caption^^
+```
+
 
 ## Development Workflow
 
