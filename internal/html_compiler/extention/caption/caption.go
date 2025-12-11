@@ -121,7 +121,9 @@ func (r *CaptionHTMLRenderer) renderCaption(
 	w util.BufWriter, source []byte, n gast.Node, entering bool) (gast.WalkStatus, error) {
 	if entering {
 		if n.Attributes() != nil {
-			_, _ = w.WriteString("<span style=\"display: block; width: 100%; text-align: center; font-style: italic; opacity: 0.8;\"")
+			_, _ = w.WriteString(
+				"<span style=\"display: block; width: 100%; text-align: center; font-style: italic; opacity: 0.8;\"",
+			)
 			html.RenderAttributes(w, n, CaptionAttributeFilter)
 			_ = w.WriteByte('>')
 		} else {
