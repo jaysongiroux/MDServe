@@ -1,9 +1,12 @@
 <nav class="glass-nav fixed w-full z-20 top-0 left-0">
   <div class="p-4 flex max-w-screen-xl justify-between w-full mx-auto">
     <!-- brand -->
-    <a href="/" class="flex items-center gap-3">
-      <span class="text-neutral-800 text-lg font-semibold">{{ .Site.Name }}</span>
-    </a>
+    <div class="flex items-center gap-3">
+      <img src="{{.AssetsPath}}/square_logo.webp" alt="logo" class="w-10 h-10" />
+      <a href="/" class="flex items-center gap-3">
+        <span class="text-neutral-800 text-lg font-semibold">{{ .Site.Name }}</span>
+      </a>
+    </div>
 
     <!-- hamburger (mobile) -->
     <button
