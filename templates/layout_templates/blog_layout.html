@@ -13,6 +13,15 @@
     </div>
   </div>
 
+  <div class="my-6">
+    <input
+      id="search-input"
+      type="text"
+      placeholder="Search articles..."
+      class="w-full px-4 py-2 border border-neutral-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+    />
+  </div>
+
   <div id="blog-articles" class="flex flex-col gap-4 mt-8"></div>
 
   <div id="pagination-controls" class="flex justify-between mt-8">
@@ -31,135 +40,213 @@
     </button>
   </div>
 </div>
-
 <script>
-  const updateUrlParam = (paramName, paramValue) => {
-      // maintains current params but updates the given param
-      const currentUrl = window.location.href;
-      const newUrl = new URL(currentUrl);
-      newUrl.searchParams.set(paramName, paramValue);
+  const updateUrlParam = (paramName, paramValue, reload = true) => {
+    const currentUrl = window.location.href;
+    const newUrl = new URL(currentUrl);
+    newUrl.searchParams.set(paramName, paramValue);
+    if (reload) {
       window.location.href = newUrl.toString();
-  }
+    } else {
+      window.history.pushState({}, '', newUrl.toString());
+    }
+  };
 
-  const clearUrlParam = (paramName) => {
-      // maintains current params but removes the given param
-      const currentUrl = window.location.href;
-      const newUrl = new URL(currentUrl);
-      newUrl.searchParams.delete(paramName);
+  const clearUrlParam = (paramName, reload = true) => {
+    const currentUrl = window.location.href;
+    const newUrl = new URL(currentUrl);
+    newUrl.searchParams.delete(paramName);
+    if (reload) {
       window.location.href = newUrl.toString();
+    } else {
+      window.history.pushState({}, '', newUrl.toString());
+    }
+  };
+
+  const pageList = {{ .PageList}} || [];
+  const pageSize = {{ .Site.PageSize }};
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const currentPage = parseInt(urlParams.get("page")) || 1;
+  const currentTag = urlParams.get("tag") || null;
+  const currentSearch = urlParams.get("search") || ""; // <-- persistent search
+
+  const start = (currentPage - 1) * pageSize;
+  const end = start + pageSize;
+
+  let paginatedSiteMap = pageList.slice(start, end);
+  let totalFilteredPages = paginatedSiteMap.length;
+
+  if (currentTag) {
+    const lowerCurrentTag = currentTag.toLowerCase();
+    paginatedSiteMap = paginatedSiteMap.filter(article =>
+      article?.metadata?.tags?.some(tag => tag.toLowerCase().includes(lowerCurrentTag))
+    );
+
+    totalFilteredPages = pageList.filter(article =>
+      article?.metadata?.tags?.some(tag => tag.toLowerCase().includes(lowerCurrentTag))
+    ).length;
+  } else {
+    totalFilteredPages = pageList.length;
   }
 
-   const pageList = {{ .PageList}} || []
-   const pageSize = {{ .Site.PageSize }};
-
-   const urlParams = new URLSearchParams(window.location.search);
-   const currentPage = parseInt(urlParams.get('page')) || 1;
-   const currentTag = urlParams.get('tag') || null;
-
-   const start = (currentPage - 1) * pageSize;
-   const end = start + pageSize;
-   let paginatedSiteMap = pageList.slice(start, end);
-   let totalFilteredPages = paginatedSiteMap.length
-   if (currentTag) {
-  const lowerCurrentTag = currentTag.toLowerCase();
-  paginatedSiteMap = paginatedSiteMap.filter(article =>
-      article?.metadata?.tags?.some(tag => tag.toLowerCase().includes(lowerCurrentTag))
-  );
-  totalFilteredPages = pageList.filter(article =>
-      article?.metadata?.tags?.some(tag => tag.toLowerCase().includes(lowerCurrentTag))
-  ).length;
-   } else {
-  totalFilteredPages = pageList.length;
-   }
-
-   const totalPages = Math.ceil(totalFilteredPages / pageSize);
-
-   const articlesContainer = document.getElementById('blog-articles');
-   const prevBtn = document.getElementById('prev-btn');
-   const nextBtn = document.getElementById('next-btn');
-   const pageInfo = document.getElementById('page-info');
-
-   paginatedSiteMap.forEach(article => {
-  const structuredMetadata = {
-      author: article?.metadata?.author,
-      description: article?.metadata?.description,
-      tags: article?.metadata?.tags,
+  // Apply search filter BEFORE rendering (persistent across paging)
+  if (currentSearch) {
+    const lower = currentSearch.toLowerCase();
+    paginatedSiteMap = paginatedSiteMap.filter(article => {
+      const header = (article.first_header || "").toLowerCase();
+      const desc = (article.metadata?.description || article.first_paragraph || "").toLowerCase();
+      return header.includes(lower) || desc.includes(lower);
+    });
   }
-  const creationDate = article?.creation_date
-  const lastModificationDate = article?.last_modified_date
-  const description = article?.metadata?.description || article?.first_paragraph
 
-  const articleEl = document.createElement('div');
-  articleEl.className = 'p-4 border border-neutral-200 rounded hover:shadow-md transition-shadow blog-article-container';
+  const totalPages = Math.ceil(totalFilteredPages / pageSize);
 
+  const articlesContainer = document.getElementById("blog-articles");
+  const prevBtn = document.getElementById("prev-btn");
+  const nextBtn = document.getElementById("next-btn");
+  const pageInfo = document.getElementById("page-info");
 
-  // Create a container for the tags
-  const tagContainer = document.createElement('div');
-  tagContainer.className = 'flex flex-row gap-2';
+  const renderArticles = (articles) => {
+    articlesContainer.innerHTML = "";
 
-  // Generate a link for each tag
-  if (structuredMetadata.tags && structuredMetadata.tags.length > 0) {
-      const tags = structuredMetadata.tags.map(tag => {
-          const tagLink = document.createElement('a');
+    articles.forEach(article => {
+      const structuredMetadata = {
+        author: article?.metadata?.author,
+        description: article?.metadata?.description,
+        tags: article?.metadata?.tags,
+      };
+
+      const creationDate = article?.creation_date;
+      const lastModificationDate = article?.last_modified_date;
+      const description = article?.metadata?.description || article?.first_paragraph;
+
+      const articleEl = document.createElement("div");
+      articleEl.className =
+        "p-4 border border-neutral-200 rounded hover:shadow-md transition-shadow blog-article-container";
+
+      const tagContainer = document.createElement("div");
+      tagContainer.className = "flex flex-row gap-2";
+
+      if (structuredMetadata.tags?.length > 0) {
+        structuredMetadata.tags.forEach(tag => {
+          const tagLink = document.createElement("a");
           tagLink.href = `?tag=${encodeURIComponent(tag)}`;
           tagLink.textContent = `#${tag}`;
-          tagLink.className = 'text-sm text-blue-600 hover:underline';
-          return tagLink;
-      });
-
-      // Append each tag link to the container
-      tags.forEach(tagLink => {
+          tagLink.className = "text-sm text-blue-600 hover:underline";
           tagContainer.appendChild(tagLink);
+        });
+      }
+
+      articleEl.innerHTML = `
+        <div class="flex flex-row gap-4">
+          <p class="text-sm text-neutral-500 !mb-1 blog-article-creation-date">
+            ${new Date(creationDate).toLocaleDateString()}
+          </p>
+          ${tagContainer.innerHTML}
+        </div>
+
+        <h4 class="text-xl font-semibold mb-2 !mt-0">
+          <a href="${article.path}" class="!text-neutral-900 hover:text-blue-600">
+            ${article.first_header}
+          </a>
+        </h4>
+
+        ${description ? `<p class="text-neutral-600 mb-2 blog-article-description">${description}</p>` : ""}
+
+        ${structuredMetadata.author ? `
+          <p class="text-sm text-neutral-500 !mb-1 blog-article-author">
+            Written by ${structuredMetadata.author}
+          </p>` : ""
+        }
+
+        <p class="text-sm text-neutral-500 !mb-1 blog-article-last-modified">
+          Last modified on ${new Date(lastModificationDate).toLocaleDateString()}
+        </p>
+      `;
+
+      articlesContainer.appendChild(articleEl);
+    });
+  };
+
+  // Initial render with persistent search
+  renderArticles(paginatedSiteMap);
+
+  pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+  prevBtn.disabled = currentPage === 1;
+  nextBtn.disabled = currentPage === totalPages;
+
+  if (currentTag) {
+    document.getElementById("tag-filters").classList.remove("hidden");
+    document.getElementById("current-tag-value").textContent = "#" + currentTag;
+  } else {
+    document.getElementById("tag-filters").classList.add("hidden");
+  }
+
+  // Keep search param when paging
+  const buildPagingUrl = (page) => {
+    const newUrl = new URL(window.location.href);
+    newUrl.searchParams.set("page", page);
+    if (currentSearch) newUrl.searchParams.set("search", currentSearch);
+    return newUrl.toString();
+  };
+
+  prevBtn.addEventListener("click", () => {
+    if (currentPage > 1) {
+      window.location.href = buildPagingUrl(currentPage - 1);
+    }
+  });
+
+  nextBtn.addEventListener("click", () => {
+    if (currentPage < totalPages) {
+      window.location.href = buildPagingUrl(currentPage + 1);
+    }
+  });
+
+  document.getElementById("clear-tag-btn").addEventListener("click", () => {
+    clearUrlParam("tag");
+  });
+
+  /* ------------------------------------------------------------------
+       SEARCH — persists via URL & stays filled on paging
+     ------------------------------------------------------------------ */
+  const searchInput = document.getElementById("search-input");
+  searchInput.value = currentSearch; // <-- KEEP VALUE
+
+  let debounceTimer = null;
+
+  const applySearch = () => {
+    const query = searchInput.value.trim();
+
+    // Filter articles client-side
+    const lower = query.toLowerCase();
+    let filtered = pageList.slice(start, end);
+
+    // Apply tag filter if present
+    if (currentTag) {
+      const lowerCurrentTag = currentTag.toLowerCase();
+      filtered = filtered.filter(article =>
+        article?.metadata?.tags?.some(tag => tag.toLowerCase().includes(lowerCurrentTag))
+      );
+    }
+
+    // Apply search filter
+    if (query) {
+      filtered = filtered.filter(article => {
+        const header = (article.first_header || "").toLowerCase();
+        const desc = (article.metadata?.description || article.first_paragraph || "").toLowerCase();
+        return header.includes(lower) || desc.includes(lower);
       });
-  }
+      updateUrlParam("search", query, false); // Update URL without reload
+    } else {
+      clearUrlParam("search", false); // Clear URL without reload
+    }
 
-  articleEl.innerHTML = `
-  <div class="flex flex-row gap-4">
-      <p class="text-sm text-neutral-500 !mb-1 blog-article-creation-date">${new Date(creationDate).toLocaleDateString()}</p>
+    renderArticles(filtered);
+  };
 
-      ${tagContainer.innerHTML}
-  </div>
-  <h4 class="text-xl font-semibold mb-2 !mt-0">
-      <a href="${article.path}" class="!text-neutral-900 hover:text-blue-600">${article.first_header}</a>
-      </h4>
-      ${description ? `<p class="text-neutral-600 mb-2 blog-article-description">${description}</p>` : ''}
-
-      ${structuredMetadata?.author ? `<p class="text-sm text-neutral-500 !mb-1 blog-article-author">Written by ${structuredMetadata.author}</p>`: ''}
-
-      <p class="text-sm text-neutral-500 !mb-1 blog-article-last-modified">Last modified on ${new Date(lastModificationDate).toLocaleDateString()}</p>
-  `;
-  articlesContainer.appendChild(articleEl);
-   });
-
-   pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
-
-
-   prevBtn.disabled = currentPage === 1;
-   nextBtn.disabled = currentPage === totalPages;
-
-   if (currentTag){
-  document.getElementById('tag-filters').classList.remove('hidden');
-  document.getElementById('current-tag-value').textContent = "#"+currentTag;
-   } else {
-  document.getElementById('tag-filters').classList.add('hidden');
-   }
-
-   prevBtn.addEventListener('click', () => {
-  if (currentPage > 1) {
-    const previousPage = currentPage - 1;
-    updateUrlParam('page', previousPage);
-  }
-   });
-
-   nextBtn.addEventListener('click', () => {
-  if (currentPage < totalPages) {
-    const nextPage = currentPage + 1;
-    updateUrlParam('page', nextPage);
-  }
-   });
-
-   document.getElementById('clear-tag-btn').addEventListener('click', () => {
-  // remove the tag from the url params
-  clearUrlParam('tag');
-   });
+  searchInput.addEventListener("input", () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(applySearch, 500);
+  });
 </script>

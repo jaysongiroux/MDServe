@@ -81,5 +81,5 @@ cache_static_max_age: 2592000 # 30 days
 # this is useful for when you want to keep your local files up to date with the remote repo's files
 # NOTE: this will overwrite the local files with the remote files. changes you've made will be lost if you've
 # altered the default files.
-sync_templates: true
-sync_assets: true
+sync_templates: false
+sync_assets: false
