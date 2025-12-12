@@ -3,6 +3,7 @@ package htmlcompiler
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -16,12 +17,14 @@ import (
 	"github.com/jaysongiroux/mdserve/internal/constants"
 	"github.com/jaysongiroux/mdserve/internal/html_compiler/extention/caption"
 	"github.com/jaysongiroux/mdserve/internal/logger"
+	"github.com/jaysongiroux/mdserve/internal/routines"
 	"github.com/yuin/goldmark"
 	highlighting "github.com/yuin/goldmark-highlighting/v2"
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
 	"github.com/yuin/goldmark/renderer/html"
 	"go.abhg.dev/goldmark/mermaid"
+	"golang.org/x/sync/errgroup"
 )
 
 type SiteMapEntry struct {
@@ -31,6 +34,62 @@ type SiteMapEntry struct {
 	FirstParagraph   string    `json:"first_paragraph"`
 	LastModifiedDate time.Time `json:"last_modified_date"`
 	CreationDate     time.Time `json:"creation_date"`
+}
+
+func CompileHTMLFiles(
+	mdFiles []string,
+	siteConfig *config.SiteConfig,
+	serverConfig *config.ServerConfig,
+) error {
+	if len(mdFiles) == 0 {
+		logger.Warn("No MD files to compile, skipping HTML compilation")
+		return nil
+	}
+
+	maxWorkers := routines.CalculateMaxWorkers(len(mdFiles))
+	logger.Info("Compiling %d MD files with %d concurrent workers", len(mdFiles), maxWorkers)
+
+	g := new(errgroup.Group)
+	g.SetLimit(maxWorkers)
+
+	for i, mdFile := range mdFiles {
+		g.Go(func() error {
+			logger.Info("[Worker %d] Compiling MD file: %s", i, mdFile)
+			htmlFile, err := CompileHTMLFile(mdFile, siteConfig)
+			logger.Debug("Compiling HTML file: %s", mdFile)
+			if err != nil {
+				logger.Fatal("Failed to compile HTML file: %v", err)
+				return fmt.Errorf("failed to compile HTML file: %w", err)
+			}
+
+			// Calculate relative path from content directory to preserve folder structure
+			relPath, err := filepath.Rel(serverConfig.ContentPath, mdFile)
+			if err != nil {
+				logger.Fatal("Failed to get relative path for %s: %v", mdFile, err)
+				return fmt.Errorf("failed to get relative path for %s: %w", mdFile, err)
+			}
+
+			// save the HTML file to the compiled HTML path
+			// write files to the content path /.html/ preserving directory structure
+			savePath := filepath.Join(serverConfig.GeneratedPath)
+			logger.Debug("Writing HTML file: %s to %s", relPath, savePath)
+
+			err = WriteHTMLFile(savePath, relPath, htmlFile)
+			if err != nil {
+				logger.Fatal("Failed to write HTML file: %v", err)
+				return fmt.Errorf("failed to write HTML file: %w", err)
+			}
+
+			return nil
+		})
+	}
+
+	if err := g.Wait(); err != nil {
+		return fmt.Errorf("failed to compile HTML files: %w", err)
+	}
+
+	logger.Info("Successfully compiled all MD files")
+	return nil
 }
 
 // CompileHTMLFile converts a markdown file to an HTML string

@@ -17,5 +17,11 @@ const (
 )
 
 const (
+	// copies the readme to the content/index.md file
 	DemoReadmeURL = "https://raw.githubusercontent.com/jaysongiroux/MDServe/refs/heads/master/README.md"
+)
+const (
+	RepoUrl                = "https://github.com/jaysongiroux/MDServe.git"
+	RepoAssetsDirectory    = "assets"
+	RepoTemplatesDirectory = "templates"
 )

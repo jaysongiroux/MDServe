@@ -2,6 +2,7 @@ package assets
 
 import (
 	"encoding/json"
+	"fmt"
 	"image"
 	_ "image/gif"  // Register GIF decoder
 	_ "image/jpeg" // Register JPEG decoder
@@ -12,7 +13,10 @@ import (
 	"strings"
 
 	"github.com/chai2010/webp"
+	"github.com/jaysongiroux/mdserve/internal/config"
 	"github.com/jaysongiroux/mdserve/internal/logger"
+	"github.com/jaysongiroux/mdserve/internal/routines"
+	"golang.org/x/sync/errgroup"
 )
 
 var (
@@ -22,8 +26,72 @@ var (
 	}
 )
 
+func OptimizeAssets(
+	assets []string,
+	siteManifestIconPaths []string,
+	serverConfig *config.ServerConfig,
+) error {
+	if len(assets) == 0 {
+		logger.Debug("No assets to optimize")
+		return nil
+	}
+
+	// Calculate optimal number of workers
+	maxWorkers := routines.CalculateMaxWorkers(len(assets))
+	logger.Info("Optimizing %d assets with %d concurrent workers", len(assets), maxWorkers)
+
+	// Create error group with limit
+	g := new(errgroup.Group)
+	g.SetLimit(maxWorkers)
+
+	// Process each asset concurrently
+	for i, asset := range assets {
+		g.Go(func() error {
+			logger.Info("[Worker %d] Checking asset: %s", i, asset)
+
+			// Filter out assets that should be skipped
+			if shouldSkipAsset(asset, siteManifestIconPaths) {
+				logger.Info(
+					"[Worker %d] Skipping asset: %s because it is a site manifest icon, favicon, SVG, or a format that is not supported for optimization",
+					i,
+					asset,
+				)
+				return nil
+			}
+
+			// Convert to WebP
+			if err := convertToWebP(
+				asset,
+				serverConfig.OptimizeImages,
+				serverConfig.OptimizeImagesQuality,
+			); err != nil {
+				logger.Error("[Worker %d] Failed to convert asset to WebP: %s - %v", i, asset, err)
+				return fmt.Errorf("failed to convert asset %s to WebP: %w", asset, err)
+			}
+
+			// Delete original asset
+			if err := DeleteAsset(asset); err != nil {
+				logger.Error("[Worker %d] Failed to delete asset: %s - %v", i, asset, err)
+				return fmt.Errorf("failed to delete asset %s: %w", asset, err)
+			}
+
+			logger.Debug("[Worker %d] Successfully optimized asset: %s", i, asset)
+			return nil
+		})
+	}
+
+	// Wait for all goroutines to complete
+	if err := g.Wait(); err != nil {
+		logger.Fatal("[Worker %d] Asset optimization failed: %v", err)
+		return err
+	}
+
+	logger.Info("Successfully optimized all assets")
+	return nil
+}
+
 // convertToWebP reads an image and saves a .webp version next to it
-func ConvertToWebP(path string, optimize bool, quality int) error {
+func convertToWebP(path string, optimize bool, quality int) error {
 	// 1. Open original file
 	file, err := os.Open(filepath.Clean(path))
 	if err != nil {
@@ -110,7 +178,7 @@ func GetIconPathsFromSiteWebmanifest(path string) ([]string, error) {
 	return iconPaths, nil
 }
 
-func ShouldSkipAsset(asset string, siteManifestIconPaths []string) bool {
+func shouldSkipAsset(asset string, siteManifestIconPaths []string) bool {
 	// if any of the site manifest icon paths are a suffix of the asset path, return true
 	for _, iconPath := range siteManifestIconPaths {
 		if strings.HasSuffix(asset, iconPath) {

@@ -30,6 +30,8 @@ type ServerConfig struct {
 	GenerationCronInterval              string                        `yaml:"generation_cron_interval"`
 	CacheHTMLMaxAge                     int                           `yaml:"cache_html_max_age"`
 	CacheStaticMaxAge                   int                           `yaml:"cache_static_max_age"`
+	SyncTemplates                       bool                          `yaml:"sync_templates"`
+	SyncAssets                          bool                          `yaml:"sync_assets"`
 }
 
 func LoadServerConfig() (*ServerConfig, error) {

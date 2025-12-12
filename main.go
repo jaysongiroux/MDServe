@@ -96,6 +96,11 @@ func prelimSetup(callerName string) (*handler.App, error) {
 		appLogger.Fatal("Failed to delete generated path: %v", err)
 	}
 
+	err = git.HandleSyncFromRepo(app.ServerConfig)
+	if err != nil {
+		appLogger.Fatal("Failed to sync from repo: %v", err)
+	}
+
 	// if HTML Compilation mode is static, compile the HTML files
 	if app.ServerConfig.HTMLCompilationMode == constants.HTMLCompilationModeStatic {
 		appLogger.Info("Compiling static HTML files")
@@ -104,28 +109,9 @@ func prelimSetup(callerName string) (*handler.App, error) {
 			appLogger.Fatal("Failed to get MD files: %v", err)
 		}
 
-		for _, mdFile := range mdFiles {
-			htmlFile, err := htmlcompiler.CompileHTMLFile(mdFile, app.SiteConfig)
-			appLogger.Debug("Compiling HTML file: %s", mdFile)
-			if err != nil {
-				appLogger.Fatal("Failed to compile HTML file: %v", err)
-			}
-
-			// Calculate relative path from content directory to preserve folder structure
-			relPath, err := filepath.Rel(app.ServerConfig.ContentPath, mdFile)
-			if err != nil {
-				appLogger.Fatal("Failed to get relative path for %s: %v", mdFile, err)
-			}
-
-			// save the HTML file to the compiled HTML path
-			// write files to the content path /.html/ preserving directory structure
-			savePath := filepath.Join(app.ServerConfig.GeneratedPath)
-			appLogger.Debug("Writing HTML file: %s to %s", relPath, savePath)
-
-			err = htmlcompiler.WriteHTMLFile(savePath, relPath, htmlFile)
-			if err != nil {
-				appLogger.Fatal("Failed to write HTML file: %v", err)
-			}
+		err = htmlcompiler.CompileHTMLFiles(mdFiles, app.SiteConfig, app.ServerConfig)
+		if err != nil {
+			appLogger.Fatal("Failed to compile HTML files: %v", err)
 		}
 
 		appLogger.Info("Static HTML files compiled successfully")
@@ -164,29 +150,9 @@ func prelimSetup(callerName string) (*handler.App, error) {
 
 	logger.Debug("Site manifest icon paths: %v", siteManifestIconPaths)
 
-	// optimize all assets that can be optimized
-	for _, asset := range optimizableAssets {
-		// filter out the assets related to the site.webmanifest
-		logger.Info("Checking asset: %s", asset)
-		if assets.ShouldSkipAsset(asset, siteManifestIconPaths) {
-			logger.Info(
-				"Skipping asset: %s because it is a site manifest icon, favicon, SVG, or a format that is not supported for optimization",
-				asset,
-			)
-			continue
-		}
-		err = assets.ConvertToWebP(
-			asset,
-			app.ServerConfig.OptimizeImages,
-			app.ServerConfig.OptimizeImagesQuality,
-		)
-		if err != nil {
-			appLogger.Fatal("Failed to convert asset to WebP: %v", err)
-		}
-		err = assets.DeleteAsset(asset)
-		if err != nil {
-			appLogger.Fatal("Failed to delete asset: %v", err)
-		}
+	err = assets.OptimizeAssets(optimizableAssets, siteManifestIconPaths, app.ServerConfig)
+	if err != nil {
+		appLogger.Fatal("Failed to optimize assets: %v", err)
 	}
 
 	logger.Info("Assets optimized successfully")

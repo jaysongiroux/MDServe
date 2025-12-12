@@ -74,3 +74,12 @@ generation_cron_interval: "@hourly"
 cache_html_max_age: 3600 # 1 hour
 # cache control settings for the assets and user static files
 cache_static_max_age: 2592000 # 30 days
+
+# syncing non-edited files
+# when syncing is enabled, the server will pull down the latest changes from the
+# repo's templates and assets directories and overwrite the local files
+# this is useful for when you want to keep your local files up to date with the remote repo's files
+# NOTE: this will overwrite the local files with the remote files. changes you've made will be lost if you've
+# altered the default files.
+sync_templates: true
+sync_assets: true
