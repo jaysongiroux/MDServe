@@ -56,27 +56,27 @@ func CompileHTMLFiles(
 		g.Go(func() error {
 			logger.Info("[Worker %d] Compiling MD file: %s", i, mdFile)
 			htmlFile, err := CompileHTMLFile(mdFile, siteConfig)
-			logger.Debug("Compiling HTML file: %s", mdFile)
+			logger.Debug("[Worker %d] Compiling HTML file: %s", i, mdFile)
 			if err != nil {
-				logger.Fatal("Failed to compile HTML file: %v", err)
+				logger.Fatal("[Worker %d] Failed to compile HTML file: %v", i, err)
 				return fmt.Errorf("failed to compile HTML file: %w", err)
 			}
 
 			// Calculate relative path from content directory to preserve folder structure
 			relPath, err := filepath.Rel(serverConfig.ContentPath, mdFile)
 			if err != nil {
-				logger.Fatal("Failed to get relative path for %s: %v", mdFile, err)
+				logger.Fatal("[Worker %d] Failed to get relative path for %s: %v", i, mdFile, err)
 				return fmt.Errorf("failed to get relative path for %s: %w", mdFile, err)
 			}
 
 			// save the HTML file to the compiled HTML path
 			// write files to the content path /.html/ preserving directory structure
 			savePath := filepath.Join(serverConfig.GeneratedPath)
-			logger.Debug("Writing HTML file: %s to %s", relPath, savePath)
+			logger.Debug("[Worker %d] Writing HTML file: %s to %s", i, relPath, savePath)
 
 			err = WriteHTMLFile(savePath, relPath, htmlFile)
 			if err != nil {
-				logger.Fatal("Failed to write HTML file: %v", err)
+				logger.Fatal("[Worker %d] Failed to write HTML file: %v", i, err)
 				return fmt.Errorf("failed to write HTML file: %w", err)
 			}
 

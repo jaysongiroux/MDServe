@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/jaysongiroux/mdserve/internal/logger"
+	"github.com/jaysongiroux/mdserve/internal/routines"
+	"golang.org/x/sync/errgroup"
 )
 
 func GetFileModifiedDate(path string) (time.Time, error) {
@@ -52,6 +54,11 @@ func GetAllFilesInDirectory(path string) ([]string, error) {
 	return filePaths, nil
 }
 
+type DestinationPath struct {
+	path        string
+	destination string
+}
+
 func RecursivelyCopyDirectory(sourcePath string, destinationPath string) error {
 	// Get source info to preserve permissions
 	sourceInfo, err := os.Stat(sourcePath)
@@ -75,7 +82,9 @@ func RecursivelyCopyDirectory(sourcePath string, destinationPath string) error {
 		return fmt.Errorf("failed to create destination directory: %w", err)
 	}
 
-	return filepath.Walk(sourcePath, func(path string, info os.FileInfo, err error) error {
+	destinationPaths := []DestinationPath{}
+
+	err = filepath.Walk(sourcePath, func(path string, info os.FileInfo, err error) error {
 		logger.Debug("Walking source path %s", path)
 		if err != nil {
 			logger.Error("Failed to walk source path %s: %v", sourcePath, err)
@@ -97,24 +106,77 @@ func RecursivelyCopyDirectory(sourcePath string, destinationPath string) error {
 		// Calculate destination path
 		destPath := filepath.Join(destinationPath, relPath)
 
-		// Handle directories
-		if info.IsDir() {
-			// Create directory with same permissions
-			if err := os.MkdirAll(destPath, info.Mode()); err != nil {
-				logger.Error(
-					"Failed to create directory %s with source permissions %v: %v",
-					destPath,
-					info.Mode(),
-					err,
-				)
-				return fmt.Errorf("failed to create directory %s: %w", destPath, err)
-			}
-			return nil
-		}
-
-		// Handle files
-		return CopyFile(path, destPath, true)
+		destinationPaths = append(destinationPaths, DestinationPath{
+			path:        path,
+			destination: destPath,
+		})
+		return nil
 	})
+	if err != nil {
+		logger.Error("Failed to walk source path %s: %v", sourcePath, err)
+		return fmt.Errorf("failed to walk source path: %w", err)
+	}
+
+	g := new(errgroup.Group)
+	g.SetLimit(routines.CalculateMaxWorkers(len(destinationPaths)))
+
+	for i, destPath := range destinationPaths {
+		g.Go(func() error {
+			// Handle directories
+			logger.Debug("[Worker %d] Handling directory: %s", i, destPath.destination)
+			info, err := os.Stat(destPath.path)
+			if err != nil {
+				logger.Error("[Worker %d] Failed to stat directory: %s: %v", i, destPath, err)
+				return fmt.Errorf("failed to stat directory: %w", err)
+			}
+
+			if info.IsDir() {
+				// Create directory with same permissions
+				if err := os.MkdirAll(destPath.destination, info.Mode()); err != nil {
+					logger.Error(
+						"Failed to create directory %s with source permissions %v: %v",
+						destPath,
+						info.Mode(),
+						err,
+					)
+					return fmt.Errorf(
+						"failed to create directory %s: %w",
+						destPath.destination,
+						err,
+					)
+				}
+				return nil
+			}
+
+			// Handle files
+			logger.Debug(
+				"[Worker %d] Copying file: %s to %s",
+				i,
+				destPath.path,
+				destPath.destination,
+			)
+			err = CopyFile(destPath.path, destPath.destination, true)
+			if err != nil {
+				logger.Error("[Worker %d] Failed to copy file: %s: %v", i, destPath.path, err)
+				return fmt.Errorf("failed to copy file: %w", err)
+			}
+
+			logger.Debug(
+				"[Worker %d] Copied file: %s to %s",
+				i,
+				destPath.path,
+				destPath.destination,
+			)
+			return nil
+		})
+	}
+
+	if err := g.Wait(); err != nil {
+		return fmt.Errorf("failed to recursively copy directory: %w", err)
+	}
+
+	logger.Info("Successfully recursively copied directory: %s", sourcePath)
+	return nil
 }
 
 func CopyFile(sourcePath, destinationPath string, overwrite bool) error {
