@@ -53,7 +53,7 @@ site:
   theme:
     code:
       # https://github.com/alecthomas/chroma/tree/master/styles
-      theme: github
+      theme: catppuccin-latte
       line_numbers: false
   
   # list of pages to use a custom layout

@@ -16,6 +16,7 @@ import (
 	"github.com/jaysongiroux/mdserve/internal/config"
 	"github.com/jaysongiroux/mdserve/internal/constants"
 	"github.com/jaysongiroux/mdserve/internal/html_compiler/extention/caption"
+	githubquoteblock "github.com/jaysongiroux/mdserve/internal/html_compiler/extention/github_quoteblock"
 	"github.com/jaysongiroux/mdserve/internal/logger"
 	"github.com/jaysongiroux/mdserve/internal/routines"
 	"github.com/yuin/goldmark"
@@ -102,6 +103,7 @@ func CompileHTMLFile(filePath string, siteConfig *config.SiteConfig) (string, er
 
 	md := goldmark.New(
 		goldmark.WithExtensions(
+			githubquoteblock.GitHubQuoteBlock,
 			extension.GFM,
 			extension.Footnote,
 			extension.Typographer,
@@ -117,7 +119,7 @@ func CompileHTMLFile(filePath string, siteConfig *config.SiteConfig) (string, er
 				highlighting.WithFormatOptions(
 					chromahtml.WithLineNumbers(siteConfig.Site.Theme.Code.LineNumbers),
 					chromahtml.BaseLineNumber(0),
-					chromahtml.InlineCode(false),
+					chromahtml.InlineCode(true),
 					chromahtml.WrapLongLines(true),
 				),
 			),

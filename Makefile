@@ -18,3 +18,6 @@ build-and-run:
 
 lint:
 	golangci-lint run --fix ./...
+
+test:
+	go test -v ./internal/html_compiler/extention/github_quoteblock/...
