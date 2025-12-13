@@ -264,7 +264,9 @@ func (r *AlertHTMLRenderer) renderAlert(
 		_, _ = w.WriteString(`">`)
 
 		// Write title with emoji
-		_, _ = w.WriteString(`<div style="display: flex; align-items: center; margin-bottom: 8px; font-weight: 600; color: `)
+		_, _ = w.WriteString(
+			`<div style="display: flex; align-items: center; margin-bottom: 8px; font-weight: 600; color: `,
+		)
 		_, _ = w.WriteString(config.colorDark)
 		_, _ = w.WriteString(`;">`)
 		_, _ = w.WriteString(`<span style="margin-right: 8px;">`)
