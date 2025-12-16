@@ -5,17 +5,25 @@
 
     {{ template "scripts.html" . }}
   </head>
-  <body class="error-page">
+  <body class="error-page container mx-auto max-w-screen-lg">
     {{ template "navbar.html" . }}
 
-    <div class="error-content">
-      <div class="container">
-        <h1 class="error-code">{{ .ErrorCode }}</h1>
-        <h2 class="error-message">{{ .ErrorTitle }}</h2>
-        <p class="error-description">{{ .ErrorMessage }}</p>
+    <div class="flex-1 flex items-center justify-center py-8 md:py-12 px-4 bg-gray-100 text-gray-800">
+      <div class="container text-center">
+        <h1 class="text-[5rem] md:text-[7rem] font-extrabold mb-4 leading-none text-gray-800">{{ .ErrorCode }}</h1>
+        <h2 class="text-xl md:text-3xl font-semibold mb-4 text-gray-700">{{ .ErrorTitle }}</h2>
+        <p class="text-lg leading-relaxed mb-8 text-gray-600">{{ .ErrorMessage }}</p>
         <div>
-          <a href="/" class="error-link">← Back to Home</a>
-          <a href="javascript:history.back()" class="error-link">Go Back</a>
+          <a
+            href="/"
+            class="inline-block m-2 py-3 px-6 bg-white text-gray-800 rounded-md border border-gray-300 font-medium transition-all duration-200 ease-in-out hover:bg-gray-100 hover:border-gray-400 hover:-translate-y-0.5 hover:shadow-md"
+            >← Back to Home</a
+          >
+          <a
+            href="javascript:history.back()"
+            class="inline-block m-2 py-3 px-6 bg-white text-gray-800 rounded-md border border-gray-300 font-medium transition-all duration-200 ease-in-out hover:bg-gray-100 hover:border-gray-400 hover:-translate-y-0.5 hover:shadow-md"
+            >Go Back</a
+          >
         </div>
       </div>
     </div>

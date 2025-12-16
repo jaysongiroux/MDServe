@@ -206,76 +206,6 @@ img {
 }
 
 /* ---------------------------------------------------
-   Error Pages
---------------------------------------------------- */
-body.error-page {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
-
-body.error-page .site-header {
-  background: #ffffff;
-}
-
-body.error-page .site-footer {
-  background: #ffffff;
-  margin-top: 0;
-}
-
-.error-content {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 3rem 1rem;
-  background: #f4f4f4;
-  color: #333;
-}
-
-.error-code {
-  font-size: 7rem;
-  font-weight: 800;
-  margin: 0 0 1rem 0;
-  line-height: 1;
-  color: #333;
-}
-
-.error-message {
-  font-size: 1.8rem;
-  font-weight: 600;
-  margin: 0 0 1rem 0;
-  color: #444;
-}
-
-.error-description {
-  font-size: 1.1rem;
-  line-height: 1.6;
-  margin: 0 0 2rem 0;
-  color: #666;
-}
-
-.error-link {
-  display: inline-block;
-  margin: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  background: #fff;
-  color: #333;
-  text-decoration: none;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-.error-link:hover {
-  background: #eee;
-  border-color: #bbb;
-  transform: translateY(-2px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-/* ---------------------------------------------------
    Mobile Slide Panel
 --------------------------------------------------- */
 .slide-right {
@@ -294,18 +224,6 @@ body.error-page .site-footer {
   .header-inner {
     flex-direction: column;
     gap: 1rem;
-  }
-
-  .error-code {
-    font-size: 5rem;
-  }
-
-  .error-message {
-    font-size: 1.2rem;
-  }
-
-  .error-content {
-    padding: 2rem 0;
   }
 }
 
