@@ -60,6 +60,27 @@ img {
   font-weight: bold;
 }
 
+
+.page-content h2 {
+  font-size: 2rem !important
+}
+
+.page-content h3 {
+  font-size: 1.5rem !important
+}
+
+.page-content h4 {
+  font-size: 1.25rem !important
+}
+
+.page-content h5 {
+  font-size: 1.125rem !important
+}
+
+.page-content h6 {
+  font-size: 1rem !important
+}
+
 .page-content p {
   margin-bottom: 1rem;
 }
