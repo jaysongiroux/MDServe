@@ -1,0 +1,14 @@
+services:
+  mdserve:
+    image: ghcr.io/jaysongiroux/mdserve:latest
+    ports:
+      - "8083:8080"
+
+    restart: unless-stopped
+    environment:
+      GIT_USERNAME: $GIT_USERNAME
+      GIT_PASSWORD: $GIT_PASSWORD
+      MD_CONFIG_LOCATION: $MD_CONFIG_LOCATION # config
+      MD_CONFIG_BRANCH: $MD_CONFIG_BRANCH # master
+      MD_SITE_CONFIG_PATH: $MD_SITE_CONFIG_PATH # https://github.com/jaysongiroux/mdserve-content.git
+      MD_SERVER_CONFIG_PATH: $MD_SERVER_CONFIG_PATH # https://github.com/jaysongiroux/mdserve-content.git
