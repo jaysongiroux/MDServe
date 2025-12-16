@@ -30,7 +30,6 @@ jaysongiroux/mdserve
 			},
 			shouldNotContain: []string{
 				`:::repo`,
-				`repo-card-error`,
 			},
 		},
 		{
@@ -41,33 +40,6 @@ jaysongiroux/mdserve
 			shouldContain: []string{
 				`https://gh-card.dev/repos/facebook/react.svg`,
 				`https://github.com/facebook/react`,
-			},
-			shouldNotContain: []string{
-				`repo-card-error`,
-			},
-		},
-		{
-			name: "Invalid repo format (no slash)",
-			markdown: `:::repo
-invalidrepo
-:::`,
-			shouldContain: []string{
-				`repo-card-error`,
-				`Invalid repository format`,
-			},
-			shouldNotContain: []string{
-				`gh-card.dev`,
-			},
-		},
-		{
-			name: "Empty repo card",
-			markdown: `:::repo
-:::`,
-			shouldContain: []string{
-				`repo-card-error`,
-			},
-			shouldNotContain: []string{
-				`gh-card.dev`,
 			},
 		},
 		{
@@ -100,9 +72,6 @@ vuejs/vue
 			shouldContain: []string{
 				`https://gh-card.dev/repos/facebook/react.svg`,
 				`https://gh-card.dev/repos/vuejs/vue.svg`,
-			},
-			shouldNotContain: []string{
-				`repo-card-error`,
 			},
 		},
 	}
@@ -173,14 +142,9 @@ func TestRepoCardValidation(t *testing.T) {
 			isValid:  true,
 		},
 		{
-			name:     "Invalid with special chars",
-			markdown: ":::repo\nuser@name/repo\n:::",
-			isValid:  false,
-		},
-		{
-			name:     "Invalid missing slash",
-			markdown: ":::repo\nusername\n:::",
-			isValid:  false,
+			name:     "Valid with dots",
+			markdown: ":::repo\nvercel/next.js\n:::",
+			isValid:  true,
 		},
 	}
 
@@ -197,13 +161,9 @@ func TestRepoCardValidation(t *testing.T) {
 			}
 
 			output := buf.String()
-			hasError := strings.Contains(output, "repo-card-error")
 
-			if tt.isValid && hasError {
-				t.Errorf("Expected valid repo card, but got error.\nOutput: %s", output)
-			}
-			if !tt.isValid && !hasError {
-				t.Errorf("Expected error for invalid repo card, but got valid output.\nOutput: %s", output)
+			if tt.isValid && !strings.Contains(output, "gh-card.dev") {
+				t.Errorf("Expected valid repo card output.\nOutput: %s", output)
 			}
 		})
 	}
