@@ -57,9 +57,12 @@ img {
 .page-content h5,
 .page-content h6 {
   margin: 1.2rem 0 0.6rem;
-  font-weight: bold;
+  font-weight: 600
 }
 
+.page-content strong {
+  font-weight: 900 !important;
+}
 
 .page-content h2 {
   font-size: 2rem !important
