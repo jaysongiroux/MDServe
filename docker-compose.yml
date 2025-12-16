@@ -13,3 +13,11 @@ services:
       - ./user-static:/app/user-static
       # The .static directory is auto-generated - no need to mount
     restart: unless-stopped
+
+    environment:
+      GIT_USERNAME: $GIT_USERNAME
+      GIT_PASSWORD: $GIT_PASSWORD
+      MD_CONFIG_LOCATION: $MD_CONFIG_LOCATION
+      MD_CONFIG_BRANCH: $MD_CONFIG_BRANCH
+      MD_SITE_CONFIG_PATH: $MD_SITE_CONFIG_PATH
+      MD_SERVER_CONFIG_PATH: $MD_SERVER_CONFIG_PATH

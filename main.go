@@ -202,9 +202,15 @@ func main() {
 	appLogger := logger.New("Initial Setup", logger.DebugLevel)
 	// Load .env file if it exists
 	if err := godotenv.Load(); err != nil {
-		appLogger.Warn(
-			"No .env file found or unable to load it, using system environment variables",
-		)
+		// Check if running in Docker (common indicators)
+		_, dockerEnvExists := os.Stat("/.dockerenv")
+		inDocker := dockerEnvExists == nil || os.Getenv("DOCKER_CONTAINER") != ""
+
+		if inDocker {
+			appLogger.Debug("Running in Docker container, using environment variables from container")
+		} else {
+			appLogger.Info("No .env file found, using system environment variables")
+		}
 	}
 
 	app, err := prelimSetup("Main")

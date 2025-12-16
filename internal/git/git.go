@@ -18,6 +18,8 @@ import (
 // Errors
 const (
 	ErrAlreadyUpToDate = "already up-to-date"
+	ErrObjectNotFound  = "object not found"
+	ErrOutOfSync       = "out of sync"
 )
 
 func fetchGitRemoteContent(url string, destinationPath string, branch string) error {
@@ -120,6 +122,12 @@ func pullLatestGitRemoteContent(branch string, directory string) error {
 	if err != nil {
 		if strings.Contains(err.Error(), ErrAlreadyUpToDate) {
 			logger.Debug("Branch %s is already up-to-date", branch)
+		} else if strings.Contains(err.Error(), ErrObjectNotFound) {
+			// Object not found error typically occurs with shallow clones when
+			// the remote has been force-pushed or rebased. Return a specific error
+			// so the caller can handle it by re-cloning.
+			logger.Warn("Git objects not found for branch %s, repository needs to be re-cloned", branch)
+			return fmt.Errorf("git repository is out of sync: %w", err)
 		} else {
 			logger.Error("Failed to pull down the latest changes from branch %s: %v", branch, err)
 			return err
@@ -209,7 +217,30 @@ func HandleGitRemoteContent(serverConfig *config.ServerConfig) error {
 		logger.Debug("Git remote content directory is a git repository, pulling down the latest changes")
 		err = pullLatestGitRemoteContent(serverConfig.GitRemoteContentBranch, directory)
 		if err != nil {
-			return err
+			// If the repository is out of sync (e.g., "object not found" errors from shallow clones
+			// after force pushes), delete it and re-clone fresh
+			if strings.Contains(err.Error(), ErrOutOfSync) {
+				logger.Info("Repository is out of sync, deleting and re-cloning fresh")
+				// Delete the corrupted repository
+				if removeErr := os.RemoveAll(directory); removeErr != nil {
+					logger.Error("Failed to remove corrupted git repository at %s: %v", directory, removeErr)
+					return fmt.Errorf("failed to remove corrupted repository: %w", removeErr)
+				}
+				// Recreate the directory
+				if mkdirErr := os.MkdirAll(directory, 0750); mkdirErr != nil {
+					logger.Error("Failed to recreate git remote content directory: %v", mkdirErr)
+					return fmt.Errorf("failed to recreate directory: %w", mkdirErr)
+				}
+				// Re-clone the repository
+				logger.Info("Re-cloning repository from %s", serverConfig.GitRemoteContentURL)
+				err = fetchGitRemoteContent(serverConfig.GitRemoteContentURL, directory, serverConfig.GitRemoteContentBranch)
+				if err != nil {
+					return fmt.Errorf("failed to re-clone repository: %w", err)
+				}
+				logger.Info("Successfully re-cloned repository")
+			} else {
+				return err
+			}
 		}
 	}
 
