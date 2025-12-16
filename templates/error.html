@@ -8,7 +8,7 @@
   <body class="container mx-auto max-w-screen-lg">
     {{ template "navbar.html" . }}
 
-    <div class="flex-1 flex items-center justify-center py-8 md:py-12 px-4 text-gray-800">
+    <div class="flex-1 flex items-start md:items-center justify-center px-4 pt-32 min-h-screen text-gray-800">
       <div class="container text-center">
         <h1 class="text-[5rem] md:text-[7rem] font-extrabold mb-4 leading-none text-gray-800">{{ .ErrorCode }}</h1>
         <h2 class="text-xl md:text-3xl font-semibold mb-4 text-gray-700">{{ .ErrorTitle }}</h2>
