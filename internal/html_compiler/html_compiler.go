@@ -17,6 +17,7 @@ import (
 	"github.com/jaysongiroux/mdserve/internal/constants"
 	"github.com/jaysongiroux/mdserve/internal/html_compiler/extention/caption"
 	githubquoteblock "github.com/jaysongiroux/mdserve/internal/html_compiler/extention/github_quoteblock"
+	repocard "github.com/jaysongiroux/mdserve/internal/html_compiler/extention/repo_card"
 	"github.com/jaysongiroux/mdserve/internal/logger"
 	"github.com/jaysongiroux/mdserve/internal/routines"
 	"github.com/yuin/goldmark"
@@ -113,6 +114,7 @@ func CompileHTMLFile(filePath string, siteConfig *config.SiteConfig) (string, er
 			extension.Linkify,
 			extension.TaskList,
 			caption.Caption,
+			repocard.RepoCard,
 			&mermaid.Extender{},
 			highlighting.NewHighlighting(
 				highlighting.WithStyle(siteConfig.Site.Theme.Code.Theme),

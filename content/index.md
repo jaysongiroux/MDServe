@@ -7,11 +7,17 @@
 
 ![hero image](/assets/logo.jpg)
 
+
 <a href="https://github.com/jaysongiroux/MDServe/actions/workflows/ci.yml">
   <img src="https://github.com/jaysongiroux/MDServe/actions/workflows/ci.yml/badge.svg" alt="Build Pipeline" style="height: 20px; width: auto; vertical-align: middle;">
 </a>
 
+:::repo
+jaysongiroux/mdserve
+:::
+
 **MDServe** is a high-performance, flat-file content server built with Go.
+
 
 MDServe transforms a folder of Markdown files into a dynamic website. Unlike traditional Static Site Generators (SSGs), MDServe is a live HTTP server that can compile content on-demand or serve pre-compiled HTML from memory. Built using Go's standard library `html/template` package, it supports advanced features like custom layouts, pagination, tag filtering, and metadata-driven content organization.
 
@@ -257,6 +263,55 @@ Layout templates are stored in `/templates/layout_templates/` and have access to
 - `{{ .SiteMap }}`: Full sitemap of all pages
 - `{{ .PageList }}`: Filtered list of pages (when `filter` is specified)
 - `{{ .Site }}`: Site configuration (page_size, theme, etc.)
+
+
+
+## Custom Blocks
+MDServe introduces some custom markdown blocks to make formatting a bit easier.
+
+### Captions
+Captions are center-aligned italic paragraphs that allow users to caption the block above it.
+
+**Notation:**
+```
+^^ this is a caption ^^
+^^this is also a caption^^
+```
+
+### Github repo
+Repo blocks allow you to utilize [gh-cards](https://gh-card.dev) to create repo images in markdown
+
+**Notation:**
+```
+::: repo
+username/repo
+:::
+```
+
+### Github Alerts
+Supports github flavored alerts
+
+[Github documentation](https://github.com/markedjs/marked/issues/3857)
+
+**Notation:**
+```
+> this is a plain quote block
+
+> [!NOTE]
+> Useful information that users should know, even when skimming content.
+
+> [!TIP]
+> Helpful advice for doing things better or more easily.
+
+> [!IMPORTANT]
+> Key information users need to know to achieve their goal.
+
+> [!WARNING]
+> Urgent info that needs immediate user attention to avoid problems.
+
+> [!CAUTION]
+> Advises about risks or negative outcomes of certain actions.
+```
 
 
 ## Development Workflow

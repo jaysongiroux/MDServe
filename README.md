@@ -287,6 +287,41 @@ Captions are center-aligned italic paragraphs that allow users to caption the bl
 ^^this is also a caption^^
 ```
 
+### Github repo
+Repo blocks allow you to utilize [gh-cards](https://gh-card.dev) to create repo images in markdown
+
+**Notation:**
+```
+::: repo
+username/repo
+:::
+```
+
+### Github Alerts
+Supports github flavored alerts
+
+[Github documentation](https://github.com/markedjs/marked/issues/3857)
+
+**Notation:**
+```
+> this is a plain quote block
+
+> [!NOTE]
+> Useful information that users should know, even when skimming content.
+
+> [!TIP]
+> Helpful advice for doing things better or more easily.
+
+> [!IMPORTANT]
+> Key information users need to know to achieve their goal.
+
+> [!WARNING]
+> Urgent info that needs immediate user attention to avoid problems.
+
+> [!CAUTION]
+> Advises about risks or negative outcomes of certain actions.
+```
+
 
 ## Development Workflow
 
