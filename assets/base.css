@@ -103,6 +103,9 @@ img {
   padding: 0.2rem 0.4rem;
   border-radius: 4px;
   font-family: Consolas, monospace;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .page-content pre {

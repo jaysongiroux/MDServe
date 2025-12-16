@@ -121,7 +121,7 @@ func CompileHTMLFile(filePath string, siteConfig *config.SiteConfig) (string, er
 				highlighting.WithFormatOptions(
 					chromahtml.WithLineNumbers(siteConfig.Site.Theme.Code.LineNumbers),
 					chromahtml.BaseLineNumber(0),
-					chromahtml.InlineCode(true),
+					chromahtml.InlineCode(false),
 					chromahtml.WrapLongLines(true),
 				),
 			),

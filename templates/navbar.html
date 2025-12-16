@@ -96,7 +96,7 @@
     <ul class="space-y-1 text-neutral-800 menu-list list-none">
       {{ range .Navbar }} {{if .Dropdown}}
 
-      <li class="border-t border-neutral-100 pt-3 list-none">
+      <li class="list-none">
         <div class="flex items-center justify-between">
           <a href="{{.URL}}" class="text-neutral-800 px-3 py-2 flex-1 hover:bg-neutral-100 rounded">{{.Label}}</a>
           <!-- caret button toggles submenu; keyboard accessible -->
