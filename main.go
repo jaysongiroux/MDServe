@@ -224,8 +224,8 @@ func main() {
 
 	app.Templates = template.New("").Funcs(template.FuncMap{
 		"table_of_contents_href": func(text string) string {
-			// lower and replace all non-alphanumeric characters (except spaces) with ""
-			re := regexp.MustCompile(`[^a-zA-Z0-9 ]`)
+			// lower and replace all non-alphanumeric characters (except spaces and hyphens) with ""
+			re := regexp.MustCompile(`[^a-zA-Z0-9 \-]`)
 			cleanedText := re.ReplaceAllString(strings.TrimSpace(text), "")
 			// replace spaces with hyphens
 			cleanedText = strings.ReplaceAll(cleanedText, " ", "-")
