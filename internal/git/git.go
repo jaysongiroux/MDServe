@@ -100,14 +100,14 @@ func pullLatestGitRemoteContent(branch string, directory string) error {
 	// open the repository
 	repo, err := openGitRepository(directory)
 	if err != nil {
-		logger.Error("Failed to open git repository at %s: %v", directory, err)
-		return err
+		logger.Warn("Failed to open git repository at %s: %v", directory, err)
+		return fmt.Errorf("git repository is %s: %w", ErrOutOfSync, err)
 	}
 
 	worktree, err := repo.Worktree()
 	if err != nil {
-		logger.Error("Failed to get worktree: %v", err)
-		return err
+		logger.Warn("Failed to get worktree: %v", err)
+		return fmt.Errorf("git repository is %s: %w", ErrOutOfSync, err)
 	}
 
 	logger.Debug("Pulling the latest changes from branch %s", branch)
@@ -124,10 +124,16 @@ func pullLatestGitRemoteContent(branch string, directory string) error {
 			logger.Debug("Branch %s is already up-to-date", branch)
 		} else if strings.Contains(err.Error(), ErrObjectNotFound) {
 			// Object not found error typically occurs with shallow clones when
-			// the remote has been force-pushed or rebased. Return a specific error
-			// so the caller can handle it by re-cloning.
+			// the remote has been force-pushed or rebased, or when the repository
+			// is corrupted (common in Docker container restarts without volumes)
 			logger.Warn("Git objects not found for branch %s, repository needs to be re-cloned", branch)
-			return fmt.Errorf("git repository is out of sync: %w", err)
+			return fmt.Errorf("git repository is %s: %w", ErrOutOfSync, err)
+		} else if strings.Contains(err.Error(), "reference not found") || 
+		          strings.Contains(err.Error(), "couldn't find remote ref") ||
+		          strings.Contains(err.Error(), "repository does not exist") {
+			// These errors indicate repository corruption or invalid state
+			logger.Warn("Repository reference errors detected, repository needs to be re-cloned")
+			return fmt.Errorf("git repository is %s: %w", ErrOutOfSync, err)
 		} else {
 			logger.Error("Failed to pull down the latest changes from branch %s: %v", branch, err)
 			return err
@@ -140,10 +146,44 @@ func pullLatestGitRemoteContent(branch string, directory string) error {
 }
 
 func isGitRemoteContentDirectoryAGitRepository() (bool, error) {
-	_, err := openGitRepository(constants.GitRemoteContentDirectory)
+	repo, err := openGitRepository(constants.GitRemoteContentDirectory)
 	if err != nil {
 		return false, nil
 	}
+	
+	// Validate that the repository has a valid worktree
+	// This helps detect corrupted or incomplete repositories (common in Docker restarts)
+	worktree, err := repo.Worktree()
+	if err != nil {
+		logger.Debug("Repository exists but worktree is invalid: %v", err)
+		return false, nil
+	}
+	
+	// Validate that the repository has a valid HEAD reference
+	// This ensures the repository has been properly initialized with at least one commit
+	_, err = repo.Head()
+	if err != nil {
+		logger.Debug("Repository exists but HEAD reference is invalid: %v", err)
+		return false, nil
+	}
+	
+	// Check if the worktree directory exists and is not empty
+	// In ephemeral Docker containers, the directory might exist but be empty
+	status, err := worktree.Status()
+	if err != nil {
+		logger.Debug("Repository exists but status check failed: %v", err)
+		return false, nil
+	}
+	
+	// Additional validation: check if .git/config exists
+	// This is a critical file that should always exist in a valid git repository
+	gitConfigPath := filepath.Join(constants.GitRemoteContentDirectory, ".git", "config")
+	if _, err := os.Stat(gitConfigPath); os.IsNotExist(err) {
+		logger.Debug("Repository directory exists but .git/config is missing")
+		return false, nil
+	}
+	
+	logger.Debug("Repository validation successful, status has %d entries", len(status))
 	return true, nil
 }
 
@@ -208,7 +248,23 @@ func HandleGitRemoteContent(serverConfig *config.ServerConfig) error {
 	}
 	// if it is not a git repository, clone the remote content
 	if !isGitRepository {
-		logger.Debug("Git remote content directory is not a git repository, cloning it")
+		logger.Debug("Git remote content directory is not a valid git repository, preparing for fresh clone")
+		
+		// Clean up any existing corrupted or partial data
+		// This is especially important in Docker containers where restarts might leave partial data
+		logger.Debug("Cleaning up directory before cloning")
+		if removeErr := os.RemoveAll(directory); removeErr != nil {
+			logger.Error("Failed to clean up directory at %s: %v", directory, removeErr)
+			return fmt.Errorf("failed to clean up directory: %w", removeErr)
+		}
+		
+		// Recreate the directory
+		if mkdirErr := os.MkdirAll(directory, 0750); mkdirErr != nil {
+			logger.Error("Failed to recreate git remote content directory: %v", mkdirErr)
+			return fmt.Errorf("failed to recreate directory: %w", mkdirErr)
+		}
+		
+		logger.Debug("Cloning git remote content")
 		err = fetchGitRemoteContent(serverConfig.GitRemoteContentURL, directory, serverConfig.GitRemoteContentBranch)
 		if err != nil {
 			return err
