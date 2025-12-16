@@ -90,6 +90,10 @@ img {
   text-decoration: underline;
 }
 
+.page-content ul {
+  padding-left: 24px;
+}
+
 .page-content pre,
 .page-content code {
   background: #f4f4f4;
