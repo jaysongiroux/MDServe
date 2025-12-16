@@ -207,7 +207,9 @@ func main() {
 		inDocker := dockerEnvExists == nil || os.Getenv("DOCKER_CONTAINER") != ""
 
 		if inDocker {
-			appLogger.Debug("Running in Docker container, using environment variables from container")
+			appLogger.Debug(
+				"Running in Docker container, using environment variables from container",
+			)
 		} else {
 			appLogger.Info("No .env file found, using system environment variables")
 		}
