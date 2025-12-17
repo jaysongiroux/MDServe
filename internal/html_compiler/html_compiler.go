@@ -36,6 +36,7 @@ type SiteMapEntry struct {
 	FirstParagraph   string    `json:"first_paragraph"`
 	LastModifiedDate time.Time `json:"last_modified_date"`
 	CreationDate     time.Time `json:"creation_date"`
+	FirstImage       string    `json:"first_image"`
 }
 
 func CompileHTMLFiles(
@@ -249,4 +250,19 @@ func GetFirstParagraph(HTMLContent string) (string, error) {
 	}
 
 	return firstNonEmptyParagraph, nil
+}
+
+func getFirstImage(HTMLContent string) (string, error) {
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(HTMLContent))
+	if err != nil {
+		return "", err
+	}
+
+	img := doc.Find("img").First()
+	if img.Length() == 0 {
+		return "", nil
+	}
+	src, _ := img.Attr("src")
+
+	return src, nil
 }

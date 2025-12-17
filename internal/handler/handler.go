@@ -53,6 +53,9 @@ func HandlePage(app *App, w http.ResponseWriter, r *http.Request) {
 		data.Metadata = nil
 	}
 
+	// set the sitemap entity
+	data.SiteMapEntity = sitemapEntity
+
 	// Determine layout
 	layoutFile, layoutFilter := determineLayout(app, pageName)
 

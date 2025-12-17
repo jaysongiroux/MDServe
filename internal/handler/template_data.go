@@ -25,6 +25,7 @@ type TemplateData struct {
 	ErrorMessage   *string
 	PageList       *[]htmlcompiler.SiteMapEntry
 	Metadata       *htmlcompiler.Metadata
+	SiteMapEntity  *htmlcompiler.SiteMapEntry
 }
 
 func newTemplateData(app *App) TemplateData {
@@ -36,5 +37,6 @@ func newTemplateData(app *App) TemplateData {
 		PoweredByURL:   app.SiteConfig.Site.PoweredByURL,
 		UserStaticPath: "/" + app.ServerConfig.UserStaticPath,
 		AssetsPath:     "/" + app.ServerConfig.AssetsPath,
+		SiteMapEntity:  nil,
 	}
 }

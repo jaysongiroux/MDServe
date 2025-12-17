@@ -1,17 +1,63 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<meta name="description" content="{{ .Site.Name }}" />
 
+<!-- Styles -->
 <link rel="stylesheet" href="{{ .AssetsPath }}/base.css" />
-<script src="{{ .AssetsPath }}/base.js"></script>
-
-<!-- User overrides -->
 <link rel="stylesheet" href="{{ .UserStaticPath }}/custom.css" />
 
-<!-- user js overrides -->
-<script src="{{ .UserStaticPath }}/custom.js"></script>
-
+<!-- Scripts -->
+<script src="{{ .AssetsPath }}/base.js"></script>
 <script src="{{ .AssetsPath }}/tailwind.js"></script>
 <script src="{{ .AssetsPath }}/elements.js" type="module"></script>
+<script src="{{ .UserStaticPath }}/custom.js"></script>
 
+<!-- Base Meta -->
 {{ template "base_meta.html" . }}
+
+<!-- Theme Color -->
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)" />
+
+<!-- Open Graph & Twitter Card -->
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="{{ .Site.Name }}" />
+<meta name="twitter:site" content="{{ .Site.Name }}" />
+<meta name="twitter:creator" content="{{ .Site.Author }}" />
+
+{{ if and .SiteMapEntity .SiteMapEntity.Path }}
+<link rel="canonical" href="{{ .SiteMapEntity.Path }}" />
+<meta property="og:url" content="{{ .SiteMapEntity.Path }}" />
+{{ end }}
+
+<!-- Title -->
+{{ if and .SiteMapEntity .SiteMapEntity.FirstHeader }}
+<meta property="og:title" content="{{ .SiteMapEntity.FirstHeader }}" />
+<meta name="twitter:title" content="{{ .SiteMapEntity.FirstHeader }}" />
+{{ else if .PageName }}
+<meta property="og:title" content="{{ .PageName }}" />
+<meta name="twitter:title" content="{{ .PageName }}" />
+{{ else }}
+<meta property="og:title" content="{{ .Site.Name }}" />
+<meta name="twitter:title" content="{{ .Site.Name }}" />
+{{ end }}
+
+<!-- Description -->
+{{ if and .SiteMapEntity .SiteMapEntity.FirstParagraph }}
+<meta name="description" content="{{ .SiteMapEntity.FirstParagraph }}" />
+<meta property="og:description" content="{{ .SiteMapEntity.FirstParagraph }}" />
+<meta name="twitter:description" content="{{ .SiteMapEntity.FirstParagraph }}" />
+{{ else }}
+<meta name="description" content="{{ .Site.Description }}" />
+<meta property="og:description" content="{{ .Site.Description }}" />
+<meta name="twitter:description" content="{{ .Site.Description }}" />
+{{ end }}
+
+<!-- Image: summary_large_image with image, summary (text-only) without -->
+{{ if and .SiteMapEntity .SiteMapEntity.FirstImage }}
+<meta name="twitter:card" content="summary_large_image" />
+<meta property="og:image" content="{{ .SiteMapEntity.FirstImage }}" />
+<meta name="twitter:image" content="{{ .SiteMapEntity.FirstImage }}" />
+<meta name="twitter:image:alt" content="{{ .Site.Name }}" />
+{{ else }}
+<meta name="twitter:card" content="summary" />
+{{ end }}

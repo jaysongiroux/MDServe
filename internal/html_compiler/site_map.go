@@ -92,6 +92,11 @@ func GenerateSiteMap(
 			return nil, fmt.Errorf("failed to get first paragraph for file %s: %w", file, err)
 		}
 
+		firstImage, err := getFirstImage(htmlContent)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get first image for file %s: %w", file, err)
+		}
+
 		markdownContent, err := os.ReadFile(filepath.Clean(file))
 		if err != nil {
 			return nil, fmt.Errorf("failed to read markdown content for file %s: %w", file, err)
@@ -147,6 +152,7 @@ func GenerateSiteMap(
 			LastModifiedDate: lastModifiedDate,
 			Metadata:         metadata,
 			CreationDate:     creationDate,
+			FirstImage:       firstImage,
 		})
 	}
 
